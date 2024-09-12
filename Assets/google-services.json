@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "87674142667",
+    "project_id": "tracememory-daa32",
+    "storage_bucket": "tracememory-daa32.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:87674142667:android:785e2e823ef3dc30ee804e",
+        "android_client_info": {
+          "package_name": "com.DefaultCompany.com.unity.template.mobile2D"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAn6OeLQD_Rs3GeVU9DhnjzL1m8JwgqO2c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
