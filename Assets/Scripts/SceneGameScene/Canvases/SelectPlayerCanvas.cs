@@ -56,6 +56,8 @@ public class SelectPlayerCanvas : MonoBehaviour
             Image partnerImage = partnerTransform.Find("Mask/ImageSource").GetComponent<Image>();
             Image sourceImage = sourceTransform.Find("Mask/ImageSource").GetComponent<Image>();
             partnerImage.sprite = sourceImage.sprite;
+
+            if (partnerNameText.text == "Empty") partnerNameText.gameObject.SetActive(false);
         }
     }
 

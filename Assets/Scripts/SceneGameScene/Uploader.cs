@@ -63,8 +63,8 @@ public class Uploader : MonoBehaviour
     public void UploadAnswers(int[] answers, int mockActorNumber = -1, string mockRoomCode = null)
     {
         // 모의 데이터를 사용할 경우, 실제 네트워크 데이터 대신 사용
-        int actorNumber = mockActorNumber != -1 ? mockActorNumber : PhotonNetwork.LocalPlayer.ActorNumber;
-        string roomCode = !string.IsNullOrEmpty(mockRoomCode) ? mockRoomCode : GameManager.Instance.GetRoomCode();
+        int actorNumber = mockActorNumber == -1 ? PhotonNetwork.LocalPlayer.ActorNumber : mockActorNumber;
+        string roomCode = string.IsNullOrEmpty(mockRoomCode) ? GameManager.Instance.GetRoomCode() : mockRoomCode;
 
         // Dictionary로 변환하여 데이터 업로드
         Dictionary<string, object> answerData = new Dictionary<string, object>();
@@ -74,6 +74,7 @@ public class Uploader : MonoBehaviour
             answerData[$"question_{i}"] = answers[i];
         }
 
+        Debug.Log("UploadAnswers : " + roomCode + " " + actorNumber);
         // Firebase Realtime Database에 ActorNumber를 키로 사용하여 데이터 저장
         databaseReference.Child(roomCode).Child("user_answers").Child(actorNumber.ToString()).SetValueAsync(answerData).ContinueWith(task =>
         {
@@ -128,13 +129,13 @@ public class Uploader : MonoBehaviour
         string roomCode = GameManager.Instance.GetRoomCode();
 
         // Firebase 경로에서 scoreType에 따라 점수 업데이트
-        databaseReference
+        DatabaseReference newMessageRef = databaseReference
             .Child(roomCode)
             .Child(targetActorNumber.ToString())
             .Child("SecretMessage")
             .Push();
 
-        databaseReference.SetValueAsync(message).ContinueWith(task =>
+        newMessageRef.SetValueAsync(message).ContinueWith(task =>
         {
             if (task.IsCompleted)
             {

@@ -10,12 +10,17 @@ using System.Collections.Generic;
 
 public class Loader : MonoBehaviour
 {
-    Uploader Uploader;
     private DatabaseReference databaseReference;
+
+    Uploader Uploader;
+    CanvasManager canvasManager;
+    AlwaysOnCanvas alwaysOnCanvas;
 
     private void Awake()
     {
-        Uploader = GetComponent<Uploader>();        
+        Uploader = GetComponent<Uploader>();
+        canvasManager = FindObjectOfType<CanvasManager>();
+        alwaysOnCanvas = canvasManager.AlwaysOnCanvas.GetComponent<AlwaysOnCanvas>();
     }
 
     async void Start()
@@ -123,6 +128,113 @@ public class Loader : MonoBehaviour
                 Debug.LogError($"Error loading {scoreType}: " + task.Exception);
             }
         });
+    }
+
+
+
+    // About Message (In AlwaysOnCanvas)
+    public void LoadAllMessages(DatabaseReference messageRef, Action onMessagesLoaded)
+    {
+        messageRef.GetValueAsync().ContinueWith(task =>
+        {
+            if (task.IsCompleted)
+            {
+                DataSnapshot snapshot = task.Result;
+
+                if (snapshot.Exists && snapshot.HasChildren)
+                {
+                    foreach (DataSnapshot childSnapshot in snapshot.Children)
+                    {
+                        string message = childSnapshot.Value.ToString();
+                        alwaysOnCanvas.AddMessageToContent(message);
+                    }
+                }
+                // 메시지를 모두 불러왔으므로 콜백 실행
+                onMessagesLoaded?.Invoke();
+            }
+            else
+            {
+                Debug.LogError($"Failed to load messages from Firebase: {task.Exception}");
+            }
+        });
+    }
+
+    public void HandleNewMessageAdded(object sender, ChildChangedEventArgs e)
+    {
+        if (e.Snapshot.Exists && e.Snapshot.Value != null)
+        {
+            string newMessage = e.Snapshot.Value.ToString();
+            alwaysOnCanvas.AddMessageToContent(newMessage);
+        }
+        else
+        {
+            Debug.LogError("Snapshot does not exist or is null.");
+        }
+    }
+
+    public void EnsureSecretMessagePath(int targetActorNumber, Action onPathCreated)
+    {
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        // Firebase에서 경로 참조
+        DatabaseReference messageRef = databaseReference
+            .Child(roomCode)
+            .Child(targetActorNumber.ToString())
+            .Child("SecretMessage");
+
+        // 경로가 존재하는지 확인
+        messageRef.GetValueAsync().ContinueWith(task =>
+        {
+            if (task.IsCompleted)
+            {
+                DataSnapshot snapshot = task.Result;
+
+                if (!snapshot.Exists)
+                {
+                    // 경로가 존재하지 않으면 기본값을 설정해서 경로를 생성
+                    messageRef.SetValueAsync("Initial Message").ContinueWith(setTask =>
+                    {
+                        if (setTask.IsCompleted)
+                        {
+                            Debug.Log("SecretMessage path created with initial message.");
+                            onPathCreated?.Invoke(); // 경로가 생성되었음을 알림
+                        }
+                        else
+                        {
+                            Debug.LogError($"Failed to create SecretMessage path: {setTask.Exception}");
+                        }
+                    });
+                }
+                else
+                {
+                    // 경로가 이미 존재하면 콜백을 바로 호출
+                    onPathCreated?.Invoke();
+                }
+            }
+            else
+            {
+                Debug.LogError($"Failed to check SecretMessage path: {task.Exception}");
+            }
+        });
+    }
+
+
+
+    // About LoveCard (In AlwaysOnCanvas)
+    public void HandleScoreChanged(object sender, ValueChangedEventArgs e, int targetActorNumber)
+    {
+        if (e.Snapshot.Exists && e.Snapshot.Value != null)
+        {
+            int updatedScore = int.Parse(e.Snapshot.Value.ToString());
+            Debug.Log($"{e.Snapshot.Key} score changed: {updatedScore}");
+
+            // 점수 업데이트에 따른 추가 로직
+            alwaysOnCanvas.OnScoreChanged(updatedScore);
+        }
+        else
+        {
+            Debug.LogWarning("Score data does not exist or is null.");
+        }
     }
 }
 

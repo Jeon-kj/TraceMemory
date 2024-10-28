@@ -59,12 +59,19 @@ public class ButtonManager : MonoBehaviour
     public GameObject BaseDisplay3;
     public GameObject SelectDisplay3;
 
+    //In AlwaysOnCanvas
+    [Header("AlwaysOnCanvas Section")]
+    public GameObject AboutSecretMessage;
+    public GameObject AboutLoveCard;
+
+
     private PlayerProperties playerProperties;
     private LoadGallery loadGallery;
     private NetworkManager networkManager;
     private PlayerReady playerReady;
     private QuestionCanvas questionCanvas;
     private SelectPlayerCanvas selectPlayerCanvas;
+    private CanvasManager canvasManager;
 
     private void Awake()
     {
@@ -74,6 +81,7 @@ public class ButtonManager : MonoBehaviour
         playerReady = FindObjectOfType<PlayerReady>();
         questionCanvas = FindObjectOfType<QuestionCanvas>();
         selectPlayerCanvas = FindObjectOfType<SelectPlayerCanvas>();
+        canvasManager = FindObjectOfType<CanvasManager>();
     }
 
     public void OnPreGameCanvasConfirm()
@@ -249,6 +257,8 @@ public class ButtonManager : MonoBehaviour
         {
             AskQuestion4.SetActive(false);
             questionCanvas.SubmitAnwer();
+            canvasManager.TurnOffAndOn(canvasManager.QuestionCanvas, canvasManager.SelectPlayerCanvas); // temp
+            canvasManager.TurnOffAndOn(canvasManager.QuestionCanvas, canvasManager.AlwaysOnCanvas); // temp
         }
     }
 
@@ -310,8 +320,7 @@ public class ButtonManager : MonoBehaviour
         Text actorNumberText        = targetPlayer.transform.Find("PlayerActorNumber").GetComponent<Text>();
 
         // 테스트용 Mock 데이터 설정
-        int targetActorNumber       = actorNumberText.text != "Empty" ? int.Parse(actorNumberText.text) : GetMockActorNumber();
-
+        int targetActorNumber = actorNumberText.text == "Empty" ? GetMockActorNumber() : int.Parse(actorNumberText.text);
 
         /*string targetString         = targetPlayer.transform.Find("PlayerActorNumber").GetComponent<Text>().text;
         int targetActorNumber       = targetString != "Empty" ? int.Parse(targetString) : -1;*/
@@ -355,7 +364,7 @@ public class ButtonManager : MonoBehaviour
                 string targetName = targetPlayer.transform.Find("PlayerName").GetComponent<Text>().text;
                 messageScreen.SetActive(true);
                 messageScreen.transform.Find("TargetPlayerName").GetComponent<Text>().text = targetName;
-                messageScreen.transform.Find("TargetPlayerActorNumeber").GetComponent<Text>().text = targetActorNumber.ToString();
+                messageScreen.transform.Find("TargetPlayerActorNumber").GetComponent<Text>().text = targetActorNumber.ToString();
             }
         }
     }
@@ -385,6 +394,42 @@ public class ButtonManager : MonoBehaviour
         else if (buttonText.text == "취소")
         {
             messageScreen.SetActive(false);
+        }
+    }
+
+    public void OnAlwaysOnCanvasConfirm()
+    {
+        GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
+        GameObject targetPanel = clickedButton.transform.parent.gameObject;
+        Text buttonText = clickedButton.GetComponentInChildren<Text>();
+
+        GameObject messageBox = targetPanel.transform.parent.Find("AboutSecretMessage/MessageBox").gameObject;
+        GameObject loveCardDisplay = targetPanel.transform.parent.Find("AboutLoveCard/LoveCardDisplay").gameObject;
+
+        if (targetPanel == AboutSecretMessage && buttonText.text == "M")
+        {
+            ToggleDisplay(messageBox, loveCardDisplay);
+        }
+
+        else if (targetPanel == AboutLoveCard && buttonText.text == "L")
+        {
+            ToggleDisplay(loveCardDisplay, messageBox);
+        }
+    }
+
+
+    private void ToggleDisplay(GameObject displayToToggle, GameObject otherDisplay)
+    {
+        // 현재 패널 활성화/비활성화
+        if (displayToToggle != null)
+        {
+            displayToToggle.SetActive(!displayToToggle.activeSelf);
+        }
+
+        // 다른 패널이 활성화되어 있으면 비활성화
+        if (otherDisplay != null && otherDisplay.activeSelf)
+        {
+            otherDisplay.SetActive(false);
         }
     }
 }

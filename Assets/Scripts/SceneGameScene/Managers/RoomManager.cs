@@ -40,7 +40,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     public void CreateRoom()
     {
         RoomOptions roomOptions = new RoomOptions();
-        roomOptions.MaxPlayers = 4; // 방의 최대 플레이어 수 설정
+        roomOptions.MaxPlayers = 6; // 방의 최대 플레이어 수 설정
         roomCode = GenerateRoomCode();
         PhotonNetwork.CreateRoom(roomCode, roomOptions, TypedLobby.Default);
     }
@@ -65,7 +65,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
             // 현재 존재하는 방 목록을 확인
             isUnique = IsRoomNameUnique(roomCode);
         }
-        GameManager.Instance.SetRoomCode(roomCode);
+        
         return roomCode;
     }
 
@@ -115,6 +115,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     // 방 입장하기 이후 호출됨.
     public override async void OnJoinedRoom()
     {
+        GameManager.Instance.SetRoomCode(roomCode);
         playerReady.OnJoinedRoom();
         prePlayerOrder = PhotonNetwork.CurrentRoom.GetPlayerOrderList();
 

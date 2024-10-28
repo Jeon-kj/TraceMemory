@@ -55,6 +55,6 @@ public class GameManager : MonoBehaviour
         preLifeManager.OnSetSceneIdentity();
     }
 
-    public void SetRoomCode(string roomCode) { roomCode = this.roomCode; }
+    public void SetRoomCode(string roomCode) { this.roomCode = roomCode; }
     public string GetRoomCode() { return roomCode; }
 }

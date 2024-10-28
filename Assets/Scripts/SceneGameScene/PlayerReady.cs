@@ -73,7 +73,7 @@ public class PlayerReady : MonoBehaviour
     public bool AreAllPlayersReady()
     {
         //return prePlayerReady.Count == PhotonNetwork.CurrentRoom.MaxPlayers;
-        return prePlayerReady.Count == 4;
+        return prePlayerReady.Count == 2;
     }
 }
 
