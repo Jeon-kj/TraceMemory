@@ -12,7 +12,15 @@ public class UnityMainThreadDispatcher : MonoBehaviour
         {
             while (_executionQueue.Count > 0)
             {
-                _executionQueue.Dequeue().Invoke();
+                Action action = _executionQueue.Dequeue();
+                try
+                {
+                    action.Invoke();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError("Error executing action: " + ex.ToString());
+                }
             }
         }
     }
@@ -22,6 +30,7 @@ public class UnityMainThreadDispatcher : MonoBehaviour
         if (action == null)
             throw new ArgumentNullException("action");
 
+        Debug.Log("Enqueue action: " + action.Method.ToString());
         lock (_executionQueue)
         {
             _executionQueue.Enqueue(action);

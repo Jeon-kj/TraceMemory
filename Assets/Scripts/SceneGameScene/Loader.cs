@@ -7,6 +7,7 @@ using System.Collections;
 using System;
 using Firebase.Database;
 using System.Collections.Generic;
+using Photon.Pun;
 
 public class Loader : MonoBehaviour
 {
@@ -103,7 +104,7 @@ public class Loader : MonoBehaviour
         });
     }
 
-    public void LoadFirstImpressionScore(string scoreType, int targetActorNumber, Action<int> onFirstImpressionScoreLoaded)
+    /*public void LoadFirstImpressionScore(string scoreType, int targetActorNumber, Action<int> onFirstImpressionScoreLoaded)
     {
         string roomCode = GameManager.Instance.GetRoomCode();
         // Firebase 경로에서 ActorNumber로 데이터를 가져옴
@@ -128,7 +129,7 @@ public class Loader : MonoBehaviour
                 Debug.LogError($"Error loading {scoreType}: " + task.Exception);
             }
         });
-    }
+    }*/
 
 
 
@@ -164,6 +165,7 @@ public class Loader : MonoBehaviour
         if (e.Snapshot.Exists && e.Snapshot.Value != null)
         {
             string newMessage = e.Snapshot.Value.ToString();
+            Debug.Log($"{e.Snapshot.Key} Message updated: {newMessage}");
             alwaysOnCanvas.AddMessageToContent(newMessage);
         }
         else
@@ -172,7 +174,7 @@ public class Loader : MonoBehaviour
         }
     }
 
-    public void EnsureSecretMessagePath(int targetActorNumber, Action onPathCreated)
+    /*public void EnsureSecretMessagePath(int targetActorNumber, Action onPathCreated)
     {
         string roomCode = GameManager.Instance.GetRoomCode();
 
@@ -216,7 +218,7 @@ public class Loader : MonoBehaviour
                 Debug.LogError($"Failed to check SecretMessage path: {task.Exception}");
             }
         });
-    }
+    }*/
 
 
 
@@ -229,12 +231,185 @@ public class Loader : MonoBehaviour
             Debug.Log($"{e.Snapshot.Key} score changed: {updatedScore}");
 
             // 점수 업데이트에 따른 추가 로직
-            alwaysOnCanvas.OnScoreChanged(updatedScore);
+            alwaysOnCanvas.OnScoreChanged(targetActorNumber, updatedScore);
         }
         else
         {
             Debug.LogWarning("Score data does not exist or is null.");
         }
+    }
+
+    /*public void EnsureLoveCardScorePath(int targetActorNumber, Action onPathCreated)
+    {
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        // Firebase에서 점수 경로 참조
+        DatabaseReference scoreRef = databaseReference
+            .Child(roomCode)
+            .Child(targetActorNumber.ToString())
+            .Child("LoveCardScore");
+
+        // 경로가 존재하는지 확인
+        scoreRef.GetValueAsync().ContinueWith(task =>
+        {
+            if (task.IsCompleted)
+            {
+                DataSnapshot snapshot = task.Result;
+
+                if (!snapshot.Exists)
+                {
+                    // 경로가 존재하지 않으면 기본값을 설정해서 경로를 생성
+                    scoreRef.SetValueAsync(0).ContinueWith(setTask => // 점수는 0으로 초기화
+                    {
+                        if (setTask.IsCompleted)
+                        {
+                            Debug.Log("LoveCardScore path created with initial score.");
+                            onPathCreated?.Invoke(); // 경로가 생성되었음을 알림
+                        }
+                        else
+                        {
+                            Debug.LogError($"Failed to create LoveCardScore path: {setTask.Exception}");
+                        }
+                    });
+                }
+                else
+                {
+                    // 경로가 이미 존재하면 콜백을 바로 호출
+                    onPathCreated?.Invoke();
+                }
+            }
+            else
+            {
+                Debug.LogError($"Failed to check LoveCardScore path: {task.Exception}");
+            }
+        });
+    }*/
+
+    public void EnsurePath(int targetActorNumber, string type, Action onPathCreated)
+    {
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        // Firebase에서 점수 경로 참조
+        DatabaseReference newRef = databaseReference
+            .Child(roomCode)
+            .Child(targetActorNumber.ToString())
+            .Child(type);
+
+        // 경로가 존재하는지 확인
+        newRef.GetValueAsync().ContinueWith(task =>
+        {
+            if (task.IsCompleted)
+            {
+                DataSnapshot snapshot = task.Result;
+
+                if (!snapshot.Exists)
+                {
+                    // 경로가 존재하지 않으면 기본값을 설정해서 경로를 생성
+                    newRef.SetValueAsync(type=="LoveCardScore" ? 0 : "Initial Message").ContinueWith(setTask => // 점수는 0으로 초기화
+                    {
+                        if (setTask.IsCompleted)
+                        {
+                            Debug.Log($"{type} path created.");
+                            onPathCreated?.Invoke(); // 경로가 생성되었음을 알림
+                        }
+                        else
+                        {
+                            Debug.LogError($"Failed to create {type} path: {setTask.Exception}");
+                        }
+                    });
+                }
+                else
+                {
+                    // 경로가 이미 존재하면 콜백을 바로 호출
+                    //Debug.Log($"{type} path already exist.");
+                    onPathCreated?.Invoke();
+                }
+            }
+            else
+            {
+                Debug.LogError($"Failed to check {type} path: {task.Exception}");
+            }
+        });
+    }
+
+
+    // About MiniGame1 (roodCode.MiniGame1.ActorNumber)
+    public async Task<(List<int> topScorers, int highestScore)> FindTopScorersAsync(string scoreType)
+    {
+        Debug.Log($"Fetching top scorers for score type: {scoreType}");
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        int highestScore = 0;
+        List<int> topScorers = new List<int>();
+
+        foreach (var one in PhotonNetwork.PlayerList)
+        {
+            var scoreRef = databaseReference.Child(roomCode).Child(one.ActorNumber.ToString()).Child(scoreType);
+            DataSnapshot snapshot = await scoreRef.GetValueAsync();
+            Debug.Log($"scoreRef : {scoreRef}");
+
+            if (snapshot.Exists)
+            {
+                Debug.Log($"Key: {snapshot.Key}, Value: {snapshot.Value.ToString()}");
+                int score = int.Parse(snapshot.Value.ToString());
+                if (score > highestScore)
+                {
+                    highestScore = score;
+                    topScorers.Clear();
+                    topScorers.Add(one.ActorNumber);
+                }
+                else if (score == highestScore)
+                {
+                    topScorers.Add(one.ActorNumber);
+                }
+            }
+        }
+        Debug.Log($"topScorers : {topScorers}");
+        Debug.Log($"highestScore : {highestScore}");
+        return (topScorers, highestScore);
+        /*
+        try
+        {
+            DataSnapshot snapshot = await roomRef.GetValueAsync();
+
+            if (snapshot.Exists)
+            {
+                int highestScore = 0;
+                List<int> topScorers = new List<int>();
+
+                foreach (DataSnapshot playerSnapshot in snapshot.Children)
+                {
+                    if (playerSnapshot.HasChild(scoreType))
+                    {
+                        int score = int.Parse(playerSnapshot.Child(scoreType).Value.ToString());
+                        int actorNumber = int.Parse(playerSnapshot.Key);
+
+                        if (score > highestScore)
+                        {
+                            highestScore = score;
+                            topScorers.Clear();
+                            topScorers.Add(actorNumber);
+                        }
+                        else if (score == highestScore)
+                        {
+                            topScorers.Add(actorNumber);
+                        }
+                    }
+                }
+                Debug.Log($"topScorers : {topScorers}");
+                Debug.Log($"highestScore : {highestScore}");
+                return (topScorers, highestScore);
+            }
+            else
+            {
+                throw new Exception("Failed to retrieve scores");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Error retrieving scores for room {roomCode} with type {scoreType}: {ex.Message}");
+            throw;
+        }*/
     }
 }
 

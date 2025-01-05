@@ -9,7 +9,7 @@ public class SelectPlayerCanvas : MonoBehaviour
     Uploader uploader;
 
     public GameObject roomDisplay;
-    public GameObject firstImpressionDisplay;
+    //public GameObject firstImpressionDisplay;
     public GameObject loveCardDisplay;
     public GameObject secretMessageDisplay;
 
@@ -24,7 +24,7 @@ public class SelectPlayerCanvas : MonoBehaviour
         {
             string playerGender = PhotonNetwork.LocalPlayer.GetPlayerGender();
 
-            UpdatePartnerDisplay(firstImpressionDisplay.transform, playerGender);
+            //UpdatePartnerDisplay(firstImpressionDisplay.transform, playerGender);
             UpdatePartnerDisplay(loveCardDisplay.transform, playerGender);
             UpdatePartnerDisplay(secretMessageDisplay.transform, playerGender);
         }
@@ -63,10 +63,10 @@ public class SelectPlayerCanvas : MonoBehaviour
 
 
 
-    public void AddFirstImpressionScore(int targetActorNumber)
+    /*public void AddFirstImpressionScore(int targetActorNumber)
     {
         uploader.UploadScore("FirstImpressionScore", targetActorNumber);
-    }
+    }*/
 
     public void AddLoveCardScore(int targetActorNumber)
     {

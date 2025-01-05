@@ -39,6 +39,7 @@ public class PreLifeManager : MonoBehaviourPunCallbacks
             list.RemoveAt(0);
             try
             {
+                Debug.Log($"photonView : {photonView}");
                 photonView.RPC("ReceivePreLife", player, preLifeName);  // 각 플레이어에게 역할 전달
             }
             catch(Exception e)

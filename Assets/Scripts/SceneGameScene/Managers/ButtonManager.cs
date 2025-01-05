@@ -38,6 +38,7 @@ public class ButtonManager : MonoBehaviour
 
     //In AuxiliaryCanvas
     [Header("AuxiliaryCanvas Section")]
+    public GameObject MiniGameSelectDisplay;
     public GameObject IntroduceMyself;
     public GameObject Timer;
     public GameObject RewardEffect;
@@ -46,18 +47,19 @@ public class ButtonManager : MonoBehaviour
     //In MiniGame1
     [Header("MiniGame1 Section")]
     public GameObject BaseDisplay1;
-    public GameObject SelectDisplay1;
+    public GameObject ResultDisplay1;
     [Space(10)]
 
     //In MiniGame2
     [Header("MiniGame2 Section")]
     public GameObject BaseDisplay2;
+    public GameObject ResultDisplay2;
     [Space(10)]
 
     //In MiniGame3
     [Header("MiniGame3 Section")]
     public GameObject BaseDisplay3;
-    public GameObject SelectDisplay3;
+    public GameObject ResultDisplay3;
 
     //In AlwaysOnCanvas
     [Header("AlwaysOnCanvas Section")]
@@ -72,6 +74,7 @@ public class ButtonManager : MonoBehaviour
     private QuestionCanvas questionCanvas;
     private SelectPlayerCanvas selectPlayerCanvas;
     private CanvasManager canvasManager;
+    private AuxiliaryCanvas auxiliaryCanvas;
 
     private void Awake()
     {
@@ -82,6 +85,7 @@ public class ButtonManager : MonoBehaviour
         questionCanvas = FindObjectOfType<QuestionCanvas>();
         selectPlayerCanvas = FindObjectOfType<SelectPlayerCanvas>();
         canvasManager = FindObjectOfType<CanvasManager>();
+        auxiliaryCanvas = FindObjectOfType<AuxiliaryCanvas>();
     }
 
     public void OnPreGameCanvasConfirm()
@@ -257,8 +261,9 @@ public class ButtonManager : MonoBehaviour
         {
             AskQuestion4.SetActive(false);
             questionCanvas.SubmitAnwer();
-            canvasManager.TurnOffAndOn(canvasManager.QuestionCanvas, canvasManager.SelectPlayerCanvas); // temp
+            
             canvasManager.TurnOffAndOn(canvasManager.QuestionCanvas, canvasManager.AlwaysOnCanvas); // temp
+            canvasManager.TurnOffAndOn(null, canvasManager.SelectPlayerCanvas); // temp
         }
     }
 
@@ -326,7 +331,7 @@ public class ButtonManager : MonoBehaviour
         int targetActorNumber       = targetString != "Empty" ? int.Parse(targetString) : -1;*/
 
 
-        if (targetPanel == FirstImpressionDisplay)
+        /*if (targetPanel == FirstImpressionDisplay)
         {
             if (targetActorNumber != -1)
             {
@@ -338,10 +343,10 @@ public class ButtonManager : MonoBehaviour
                 PhotonNetwork.Disconnect(); // 이거 말고도 따로 필요함.
             }
             FirstImpressionDisplay.SetActive(false);
-        }
+        }*/
 
 
-        else if (targetPanel == LoveCardDisplay)
+        if (targetPanel == LoveCardDisplay)
         {
             if (targetActorNumber != -1)
             {
@@ -353,6 +358,7 @@ public class ButtonManager : MonoBehaviour
                 PhotonNetwork.Disconnect(); // 이거 말고도 따로 필요함.
             }
             LoveCardDisplay.SetActive(false);
+            canvasManager.TurnOffAndOn(canvasManager.SelectPlayerCanvas, canvasManager.MiniGame1);
         }
 
 
@@ -417,7 +423,6 @@ public class ButtonManager : MonoBehaviour
         }
     }
 
-
     private void ToggleDisplay(GameObject displayToToggle, GameObject otherDisplay)
     {
         // 현재 패널 활성화/비활성화
@@ -430,6 +435,55 @@ public class ButtonManager : MonoBehaviour
         if (otherDisplay != null && otherDisplay.activeSelf)
         {
             otherDisplay.SetActive(false);
+        }
+    }
+
+    public void OnAuxiliaryCanvas()
+    {
+        GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
+        GameObject targetPanel = clickedButton.transform.parent.parent.parent.gameObject;
+
+        GameObject targetPlayer = clickedButton.transform.parent.parent.gameObject;
+        Text actorNumberText = targetPlayer.transform.Find("PlayerActorNumber").GetComponent<Text>();
+
+        // 테스트용 Mock 데이터 설정
+        int targetActorNumber = actorNumberText.text == "Empty" ? GetMockActorNumber() : int.Parse(actorNumberText.text);
+
+        Debug.Log("OnAuxiliaryCanvas check in1" + " : " + targetPanel);
+
+        if (targetPanel == MiniGameSelectDisplay)
+        {
+            Debug.Log("OnAuxiliaryCanvas check in2");
+            if (targetActorNumber != -1)
+            {
+                Debug.Log("OnAuxiliaryCanvas check in3");
+                auxiliaryCanvas.AddScore(targetActorNumber);
+                canvasManager.MiniGame1.GetComponent<MiniGame1>().CompleteSelecting();
+            }
+            else
+            {
+                // 플레이어를 눌렀지만, 해당 플레이어의 ActorNumber가 Empty인 버그이므로, Error처리.
+                PhotonNetwork.Disconnect(); // 이거 말고도 따로 필요함.
+            }
+            MiniGameSelectDisplay.SetActive(false);
+            BaseDisplay1.SetActive(true);
+            Debug.Log("OnAuxiliaryCanvas check out");
+        }
+    }
+
+    public void OnMiniGame1Canvas()
+    {
+        GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
+        GameObject targetPanel = clickedButton.transform.parent.gameObject;
+        Text buttonText = clickedButton.GetComponentInChildren<Text>();
+
+        if (targetPanel == BaseDisplay1)
+        {
+            if(buttonText.text == "선택하기")
+            {
+                MiniGameSelectDisplay.SetActive(true);
+                BaseDisplay1.SetActive(false);
+            }
         }
     }
 }

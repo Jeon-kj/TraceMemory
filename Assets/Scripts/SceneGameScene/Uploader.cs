@@ -5,11 +5,19 @@ using System;
 using Firebase.Database;
 using System.Collections.Generic;
 using Photon.Pun;
+using Photon.Realtime;
+using System.Reflection;
 
-public class Uploader : MonoBehaviour
+public class Uploader : MonoBehaviourPunCallbacks
 {
     private FirebaseStorage storage;
     private DatabaseReference databaseReference;
+    private CanvasManager canvasManager;
+
+    private void Awake()
+    {
+        canvasManager = FindObjectOfType<CanvasManager>();
+    }
 
     async void Start()
     {
@@ -146,5 +154,94 @@ public class Uploader : MonoBehaviour
                 Debug.LogError($"Failed to upload SecretMessage in Firebase: {task.Exception}");
             }
         });
+    }
+
+    public void UploadVoting(string scoreType)
+    {
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        // Firebase 경로에서 scoreType에 따라 점수 업데이트
+        databaseReference
+            .Child(roomCode)
+            .Child(scoreType)
+            .RunTransaction(mutableData =>
+            {
+                int currentCount = 0;
+                if (mutableData.Value != null)
+                {
+                    // 기존 값이 있으면 그 값을 사용
+                    currentCount = int.Parse(mutableData.Value.ToString());
+                }
+                // 1을 더함
+                currentCount++;
+                mutableData.Value = currentCount;
+
+                return TransactionResult.Success(mutableData);
+            }).ContinueWith(task =>
+            {
+                Debug.Log("UploadVoting continueWith check in");
+                if (task.IsCompleted)
+                {
+                    Debug.Log("UploadVoting continueWith check in task Is Completed");
+                    CheckAndNotifyEndOfVoting(scoreType);
+                    Debug.Log($"{scoreType} updated successfully in Firebase.");
+                }
+                else
+                {
+                    Debug.LogError($"Failed to update {scoreType} in Firebase: " + task.Exception);
+                }
+            });
+    }
+
+    private void CheckAndNotifyEndOfVoting(string scoreType)
+    {
+        Debug.Log("CheckAndNotifyEndOfVoting check in task Is Completed");
+        var roomRef = databaseReference.Child(GameManager.Instance.GetRoomCode()).Child(scoreType);
+
+        roomRef.GetValueAsync().ContinueWith(task =>
+        {
+            if (task.IsCompleted)
+            {
+                DataSnapshot snapshot = task.Result;
+                int currentCount = int.Parse(snapshot.Value.ToString());
+                Debug.Log($"currentCount : {currentCount}");
+                if (currentCount == GameManager.Instance.GetPlayerMaxNumber())
+                {
+
+                    UnityMainThreadDispatcher.Enqueue(() =>
+                    {
+                        if (photonView == null)
+                        {
+                            Debug.LogError("PhotonView is not assigned!");
+                            return;
+                        }
+
+                        foreach (Player player in PhotonNetwork.PlayerList)
+                        {
+                            try
+                            {
+                                photonView.RPC("ReceiveVotingEndSign", player);
+                            }
+                            catch (Exception e)
+                            {
+                                Debug.LogError($"Error: {e.Message}");
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    [PunRPC]
+    void ReceiveVotingEndSign()
+    {
+        Debug.Log("ReceiveVotingEndSign() check in task Is Completed");
+        if (!canvasManager || !canvasManager.MiniGame1)
+        {
+            Debug.LogError("CanvasManager or MiniGame1 component is not initialized!");
+            return;
+        }
+        canvasManager.MiniGame1.GetComponent<MiniGame1>().VotingEnd();
     }
 }

@@ -7,6 +7,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     private string roomCode;
+    private int playerMaxNumber = 2;
 
     PreLifeManager preLifeManager;
     ButtonManager buttonManager;
@@ -57,4 +58,6 @@ public class GameManager : MonoBehaviour
 
     public void SetRoomCode(string roomCode) { this.roomCode = roomCode; }
     public string GetRoomCode() { return roomCode; }
+
+    public int GetPlayerMaxNumber() {  return playerMaxNumber; }
 }
