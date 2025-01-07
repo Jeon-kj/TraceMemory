@@ -341,22 +341,6 @@ public class ButtonManager : MonoBehaviour
         /*string targetString         = targetPlayer.transform.Find("PlayerActorNumber").GetComponent<Text>().text;
         int targetActorNumber       = targetString != "Empty" ? int.Parse(targetString) : -1;*/
 
-
-        /*if (targetPanel == FirstImpressionDisplay)
-        {
-            if (targetActorNumber != -1)
-            {
-                selectPlayerCanvas.AddFirstImpressionScore(targetActorNumber);
-            }
-            else
-            {
-                // 플레이어를 눌렀지만, 해당 플레이어의 ActorNumber가 Empty인 버그이므로, Error처리.
-                PhotonNetwork.Disconnect(); // 이거 말고도 따로 필요함.
-            }
-            FirstImpressionDisplay.SetActive(false);
-        }*/
-
-
         if (targetPanel == LoveCardDisplay)
         {
             if (targetActorNumber != -1)
@@ -369,7 +353,12 @@ public class ButtonManager : MonoBehaviour
                 PhotonNetwork.Disconnect(); // 이거 말고도 따로 필요함.
             }
             LoveCardDisplay.SetActive(false);
-            canvasManager.TurnOffAndOn(canvasManager.SelectPlayerCanvas, canvasManager.MiniGame1);
+
+            if (!GameManager.Instance.GetSignMG1())
+                canvasManager.TurnOffAndOn(canvasManager.SelectPlayerCanvas, canvasManager.MiniGame1);
+            else if (!GameManager.Instance.GetSignMG2())
+                canvasManager.TurnOffAndOn(canvasManager.SelectPlayerCanvas, canvasManager.MiniGame2);
+            // else
         }
 
 
@@ -401,12 +390,18 @@ public class ButtonManager : MonoBehaviour
         GameObject messageScreen    = clickedButton.transform.parent.gameObject;
         Text buttonText             = clickedButton.GetComponentInChildren<Text>();
         int targetActorNumber       = int.Parse(messageScreen.transform.Find("TargetPlayerActorNumber").GetComponent<Text>().text);
-        string message              = messageScreen.transform.Find("InputField/Text").GetComponent<Text>().text;
+        Text message              = messageScreen.transform.Find("InputField/Text").GetComponent<Text>();
 
         if (buttonText.text == "전송")
         {
-            selectPlayerCanvas.SendSecretMessage(targetActorNumber, message);
+            selectPlayerCanvas.SendSecretMessage(targetActorNumber, message.text);
+            Debug.Log($"@@@@@@@message.text :: {message.text}");
+            message.text = "";
+            Debug.Log($"@@@@@@@AFTERmessage.text :: {message.text}");
+            Canvas.ForceUpdateCanvases();
+
             messageScreen.SetActive(false);
+            SecretMessageDisplay.SetActive(false);
         }
         else if (buttonText.text == "취소")
         {
@@ -518,7 +513,10 @@ public class ButtonManager : MonoBehaviour
         {
             if (buttonText.text == "확인")
             {
-                canvasManager.TurnOffAndOn(canvasManager.MiniGame1, canvasManager.MiniGame2);
+                //이 이전에 보상 추가하기.
+                //canvasManager.TurnOffAndOn(canvasManager.MiniGame1, canvasManager.MiniGame2);
+                GameManager.Instance.SetSignMG1(true);
+                canvasManager.TurnOffAndOn(canvasManager.MiniGame1, canvasManager.SelectPlayerCanvas);
             }
         }
     }
@@ -547,7 +545,9 @@ public class ButtonManager : MonoBehaviour
         {
             if (buttonText.text == "확인")
             {
-                //canvasManager.TurnOffAndOn(canvasManager.MiniGame2, canvasManager.MiniGame2);
+                //이 이전에 보상 추가하기.
+                GameManager.Instance.SetSignMG2(true);
+                canvasManager.TurnOffAndOn(canvasManager.MiniGame2, canvasManager.SelectPlayerCanvas);
             }
         }
     }

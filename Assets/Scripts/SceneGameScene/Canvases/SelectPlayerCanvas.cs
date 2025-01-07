@@ -9,7 +9,6 @@ public class SelectPlayerCanvas : MonoBehaviour
     Uploader uploader;
 
     public GameObject roomDisplay;
-    //public GameObject firstImpressionDisplay;
     public GameObject loveCardDisplay;
     public GameObject secretMessageDisplay;
 
@@ -24,10 +23,23 @@ public class SelectPlayerCanvas : MonoBehaviour
         {
             string playerGender = PhotonNetwork.LocalPlayer.GetPlayerGender();
 
-            //UpdatePartnerDisplay(firstImpressionDisplay.transform, playerGender);
             UpdatePartnerDisplay(loveCardDisplay.transform, playerGender);
             UpdatePartnerDisplay(secretMessageDisplay.transform, playerGender);
         }
+    }
+
+    private void OnEnable()
+    {
+        InitializedCanvas();
+    }
+
+    private void InitializedCanvas()
+    {
+        loveCardDisplay.SetActive(true); 
+        secretMessageDisplay.SetActive(true);
+        
+        InputField inputField = secretMessageDisplay.transform.Find("MessageScreen/InputField").GetComponent<InputField>();
+        inputField.text = "";
     }
 
     private void UpdatePartnerDisplay(Transform display, string gender)
@@ -45,6 +57,12 @@ public class SelectPlayerCanvas : MonoBehaviour
             // PlayerName 복사
             Text partnerNameText = partnerTransform.Find("PlayerName").GetComponent<Text>();
             Text sourceNameText = sourceTransform.Find("PlayerName").GetComponent<Text>();
+
+            if (sourceNameText.text == "Empty")
+            {
+                partnerTransform.gameObject.SetActive(false);
+                continue;
+            }
             partnerNameText.text = sourceNameText.text;
 
             // PlayerActorNumber 복사
@@ -56,20 +74,13 @@ public class SelectPlayerCanvas : MonoBehaviour
             Image partnerImage = partnerTransform.Find("Mask/ImageSource").GetComponent<Image>();
             Image sourceImage = sourceTransform.Find("Mask/ImageSource").GetComponent<Image>();
             partnerImage.sprite = sourceImage.sprite;
-
-            if (partnerNameText.text == "Empty") partnerNameText.gameObject.SetActive(false);
         }
     }
 
-
-
-    /*public void AddFirstImpressionScore(int targetActorNumber)
-    {
-        uploader.UploadScore("FirstImpressionScore", targetActorNumber);
-    }*/
-
     public void AddLoveCardScore(int targetActorNumber)
     {
+        Text concept = loveCardDisplay.transform.Find("Concept").GetComponent<Text>();
+        if (concept.text == "첫인상이 마음에 드는 사람에게 투표해주세요.") concept.text = "호감카드를 주고 싶은 플레이어를 선택하세요!";
         uploader.UploadScore("LoveCardScore", targetActorNumber);
     }
 

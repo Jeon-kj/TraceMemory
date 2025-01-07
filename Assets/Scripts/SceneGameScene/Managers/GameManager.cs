@@ -9,6 +9,10 @@ public class GameManager : MonoBehaviour
     private string roomCode;
     private int playerMaxNumber = 2;
 
+    // 게임 진행 관련 sign
+    private bool signMG1 = false;
+    private bool signMG2 = false;
+
     PreLifeManager preLifeManager;
     ButtonManager buttonManager;
     PlayerReady playerReady;
@@ -60,4 +64,12 @@ public class GameManager : MonoBehaviour
     public string GetRoomCode() { return roomCode; }
 
     public int GetPlayerMaxNumber() {  return playerMaxNumber; }
+
+    public void SetSignMG1(bool sign) { signMG1 = sign; }
+
+    public bool GetSignMG1() { return signMG1; }
+
+    public void SetSignMG2(bool sign) { signMG2 = sign; }
+
+    public bool GetSignMG2() { return signMG2; }
 }

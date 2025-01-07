@@ -478,18 +478,17 @@ public class Loader : MonoBehaviourPunCallbacks
         {
             var selectionRef = databaseReference.Child(roomCode).Child("MiniGame2").Child(i.ToString());
             DataSnapshot snapshot = await selectionRef.GetValueAsync();
-            
 
             if (snapshot.Exists)
             {
-                var data = snapshot.Value as Dictionary<string, object>;
+                var data = snapshot.Value as List<object>;
 
                 if (data != null)
                 {
                     int dataCount = data.Count;
-                    if(leastCount == -1 || leastCount > dataCount)
+                    if (leastCount == -1 || leastCount > dataCount)
                     {
-                        leastCount = dataCount;
+                        leastCount = dataCount;                        
                         leastCountChoiceIdx = i;
                     }
 
@@ -498,7 +497,7 @@ public class Loader : MonoBehaviourPunCallbacks
 
                     foreach (var item in data)
                     {
-                        string actorNumber = item.Value as string;
+                        string actorNumber = item.ToString();
                         players.Add(int.Parse(actorNumber));
                         Debug.Log($"ActorNumber: {actorNumber}");
                     }
