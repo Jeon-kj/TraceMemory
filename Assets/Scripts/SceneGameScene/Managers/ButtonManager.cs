@@ -248,23 +248,30 @@ public class ButtonManager : MonoBehaviour
 
         if (targetPanel == AskQuestion1)
         {
+            questionCanvas.CheckAnswer(AskQuestion1);
+            if (!questionCanvas.GetNextSign()) return;
             AskQuestion1.SetActive(false);
             AskQuestion2.SetActive(true);
         }
         else if(targetPanel == AskQuestion2)
         {
+            questionCanvas.CheckAnswer(AskQuestion2);
+            if (!questionCanvas.GetNextSign()) return;
             AskQuestion2.SetActive(false);
             AskQuestion3.SetActive(true);
         }
         else if(targetPanel == AskQuestion3)
         {
+            questionCanvas.CheckAnswer(AskQuestion3);
+            if (!questionCanvas.GetNextSign()) return;
             AskQuestion3.SetActive(false);
             AskQuestion4.SetActive(true);
         }
         else if(targetPanel == AskQuestion4)
         {
-            AskQuestion4.SetActive(false);
-            questionCanvas.SubmitAnwer();
+            questionCanvas.CheckAnswer(AskQuestion4);
+            if (!questionCanvas.GetNextSign()) return;
+            questionCanvas.SubmitAnswer();
             
             canvasManager.TurnOffAndOn(canvasManager.QuestionCanvas, canvasManager.AlwaysOnCanvas); // temp
             canvasManager.TurnOffAndOn(null, canvasManager.SelectPlayerCanvas); // temp
