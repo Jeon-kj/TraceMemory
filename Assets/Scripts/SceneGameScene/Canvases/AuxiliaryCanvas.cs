@@ -76,23 +76,14 @@ public class AuxiliaryCanvas : MonoBehaviour
             }
         }
     }
-    
-    public void UpdateCurrCanvas(string canvasName)
-    {
-        currCanvas = canvasName;
-        Debug.Log($"current Canvas Name is \"{currCanvas}\"");
-    }
 
-    public void AddScore(int targetActorNumber)
-    {
-        uploader.UploadScore(currCanvas, targetActorNumber); // Race condition은 RunTransaction에서 처리.
-    }
-
-    public void UpdateSelectDisplayConcept(string str)
+    public void SetSelectDisplayConcept(string str)
     {
         Transform concept = selectDisplay.transform.Find("Concept");
         concept.GetComponent<Text>().text = str;
     }
+
+    public string GetSelectDisplayConcept() { return selectDisplay.transform.Find("Concept").GetComponent<Text>().text; }
 
     public string GetPlayerName(int targetActorNumber)
     {

@@ -8,8 +8,9 @@ using System;
 using Firebase.Database;
 using System.Collections.Generic;
 using Photon.Pun;
+using Photon.Realtime;
 
-public class Loader : MonoBehaviour
+public class Loader : MonoBehaviourPunCallbacks
 {
     private DatabaseReference databaseReference;
 
@@ -334,9 +335,11 @@ public class Loader : MonoBehaviour
 
 
     // About MiniGame1 (roodCode.MiniGame1.ActorNumber)
-    public async Task<(List<int> topScorers, int highestScore)> FindTopScorersAsync(string scoreType)
+    public async Task<(List<int> topScorers, int highestScore)> FindTopScorers(string gameType) // Uploader.UploadReceivedVotesMG1(gameType, targetActorNumber)
     {
-        Debug.Log($"Fetching top scorers for score type: {scoreType}");
+        // roomCode.gameType2.ActorNumber.ReceivedVotes 해당 경로에서 가장 많은 투표를 받은 플레이어의 점수와 ActorNumber를 반환
+        // gameType <= {"MiniGame1", "MiniGame2"}
+        Debug.Log($"Fetching top scorers for game type: {gameType}");
         string roomCode = GameManager.Instance.GetRoomCode();
 
         int highestScore = 0;
@@ -344,13 +347,12 @@ public class Loader : MonoBehaviour
 
         foreach (var one in PhotonNetwork.PlayerList)
         {
-            var scoreRef = databaseReference.Child(roomCode).Child(one.ActorNumber.ToString()).Child(scoreType);
+            var scoreRef = databaseReference.Child(roomCode).Child(gameType).Child(one.ActorNumber.ToString()).Child("ReceivedVotes");
             DataSnapshot snapshot = await scoreRef.GetValueAsync();
             Debug.Log($"scoreRef : {scoreRef}");
 
             if (snapshot.Exists)
             {
-                Debug.Log($"Key: {snapshot.Key}, Value: {snapshot.Value.ToString()}");
                 int score = int.Parse(snapshot.Value.ToString());
                 if (score > highestScore)
                 {
@@ -367,49 +369,130 @@ public class Loader : MonoBehaviour
         Debug.Log($"topScorers : {topScorers}");
         Debug.Log($"highestScore : {highestScore}");
         return (topScorers, highestScore);
-        /*
-        try
+    }
+
+    public async Task<List<int>> FindTopScorerPredictors(string gameType, List<int> topScorer) // Uploader.UploadSelection(gameType, targetActorNumber)
+    {
+        // roomCode.gameType.ActorNumber.Selection 해당 경로에 TopScorers의 ActorNumber와 같은 값을 가진 플레이어 찾아냄.
+        // gameType <= {"MiniGame1", "MiniGame2"}
+        Debug.Log($"Fetching top scorer predictors for game type: {gameType}");
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        List<int> predictors = new List<int>();
+
+        foreach (var one in PhotonNetwork.PlayerList)
         {
-            DataSnapshot snapshot = await roomRef.GetValueAsync();
+            var selectionRef = databaseReference.Child(roomCode).Child(gameType).Child(one.ActorNumber.ToString()).Child("Selection");
+            DataSnapshot snapshot = await selectionRef.GetValueAsync();
+            Debug.Log($"selectionRef : {selectionRef}");
 
             if (snapshot.Exists)
             {
-                int highestScore = 0;
-                List<int> topScorers = new List<int>();
+                int predictedTopScorer = int.Parse(snapshot.Value.ToString());
 
-                foreach (DataSnapshot playerSnapshot in snapshot.Children)
+                if (topScorer.Exists(x => x == predictedTopScorer))
                 {
-                    if (playerSnapshot.HasChild(scoreType))
-                    {
-                        int score = int.Parse(playerSnapshot.Child(scoreType).Value.ToString());
-                        int actorNumber = int.Parse(playerSnapshot.Key);
-
-                        if (score > highestScore)
-                        {
-                            highestScore = score;
-                            topScorers.Clear();
-                            topScorers.Add(actorNumber);
-                        }
-                        else if (score == highestScore)
-                        {
-                            topScorers.Add(actorNumber);
-                        }
-                    }
+                    predictors.Add(one.ActorNumber);
+                    Debug.Log($"dictors.Add(one.ActorNumber) {one.ActorNumber}");
                 }
-                Debug.Log($"topScorers : {topScorers}");
-                Debug.Log($"highestScore : {highestScore}");
-                return (topScorers, highestScore);
-            }
-            else
-            {
-                throw new Exception("Failed to retrieve scores");
+                    
             }
         }
-        catch (Exception ex)
+
+        return predictors;
+    }
+
+    public void CheckAndNotifyEndOfVoting(string gameType)  // UploadVotedCountMG1(gameType)
+    {
+        // roomCode.MiniGame1.VotedCount 해당 경로에, 투표에 참여한 인원의 수가 전체 플레이어 수와 똑같으면 RPC처리.
+        // gameType <= {"MiniGame1", "MiniGame2"}
+        Debug.Log("CheckAndNotifyEndOfVoting check in task Is Completed");
+        var roomRef = databaseReference.Child(GameManager.Instance.GetRoomCode()).Child(gameType).Child("VotedCount");
+
+        roomRef.GetValueAsync().ContinueWith(task =>
         {
-            Debug.LogError($"Error retrieving scores for room {roomCode} with type {scoreType}: {ex.Message}");
-            throw;
-        }*/
+            if (task.IsCompleted)
+            {
+                DataSnapshot snapshot = task.Result;
+                int currentCount = int.Parse(snapshot.Value.ToString());
+                Debug.Log($"currentCount : {currentCount}");
+                if (currentCount == GameManager.Instance.GetPlayerMaxNumber())
+                {
+
+                    UnityMainThreadDispatcher.Enqueue(() =>
+                    {
+                        if (photonView == null)
+                        {
+                            Debug.LogError("PhotonView is not assigned!");
+                            return;
+                        }
+
+                        try
+                        {
+                            roomRef.SetValueAsync(0).ContinueWith(setTask =>
+                            {
+                                if (setTask.IsFaulted)
+                                {
+                                    Debug.LogError($"Failed to set value in Firebase: {setTask.Exception}");
+                                }
+                            });
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogError($"Error Find {e}");
+                        }
+
+                        foreach (Player player in PhotonNetwork.PlayerList)
+                        {
+                            try
+                            {                                
+                                photonView.RPC("ReceiveVotingEndSign", player);
+                            }
+                            catch (Exception e)
+                            {
+                                Debug.LogError($"Error: {e.Message}");
+                            }
+                        }                        
+                    });
+                    
+                }
+            }
+        });
+    }
+
+    void SelectSign()
+    {
+        Debug.Log("SelectSign started");
+
+        MiniGame1 miniGame1 = canvasManager.MiniGame1.GetComponent<MiniGame1>();
+        string sign = miniGame1.GetSign();
+
+        Debug.Log($"Before SIGN :: {sign}");
+        if (sign == "")
+        {
+            miniGame1.SetSign("ProcessTopScorers");
+            sign = miniGame1.GetSign();
+        }
+        else if (sign == "ProcessTopScorers")
+        {
+            miniGame1.SetSign("ProcessTopPredictors");
+            sign = miniGame1.GetSign();
+        }
+        Debug.Log($"After SIGN :: {sign}");
+        
+    }
+
+    [PunRPC]
+    void ReceiveVotingEndSign()
+    {
+        Debug.Log("ReceiveVotingEndSign() check in task Is Completed");
+        if (!canvasManager || !canvasManager.MiniGame1)
+        {
+            Debug.LogError("CanvasManager or MiniGame1 component is not initialized!");
+            return;
+        }
+        SelectSign();
+        canvasManager.MiniGame1.GetComponent<MiniGame1>().VotingEnd();        
     }
 }
 

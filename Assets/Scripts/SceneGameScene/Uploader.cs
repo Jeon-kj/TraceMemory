@@ -12,11 +12,11 @@ public class Uploader : MonoBehaviourPunCallbacks
 {
     private FirebaseStorage storage;
     private DatabaseReference databaseReference;
-    private CanvasManager canvasManager;
+    private Loader loader;
 
     private void Awake()
     {
-        canvasManager = FindObjectOfType<CanvasManager>();
+        loader = FindObjectOfType<Loader>();
     }
 
     async void Start()
@@ -26,7 +26,7 @@ public class Uploader : MonoBehaviourPunCallbacks
 
         // 초기화가 완료된 후에 storage를 설정
         storage = FirebaseManager.Instance.storage;
-        databaseReference = FirebaseManager.Instance.database.RootReference;
+        databaseReference = FirebaseManager.Instance.database.RootReference;       
     }
 
     public async Task<bool> UploadImage(byte[] imageBytes, string fileName)
@@ -132,6 +132,114 @@ public class Uploader : MonoBehaviourPunCallbacks
         });
     }
 
+    // MiniGame
+    public void UploadReceivedVotesMG1(string gameType, int targetActorNumber)  // Loader.FindTopScorers(gameType)
+    {
+        // roomCode.gameType2.ActorNumber.ReceivedVotes 해당 경로에 targetActorNumber가 받은 투표 수를 저장.
+        // gameType <= {"MiniGame1", "MiniGame2"}
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        // Firebase 경로에서 gameType에 따라 점수 업데이트
+        DatabaseReference scoreRef = databaseReference
+            .Child(roomCode)
+            .Child("MiniGame1")
+            .Child(targetActorNumber.ToString())            
+            .Child("ReceivedVotes");
+
+        scoreRef.RunTransaction(mutableData =>
+            {
+                int currentCount = 0;
+                if (mutableData.Value != null)
+                {
+                    // 기존 값이 있으면 그 값을 사용
+                    currentCount = int.Parse(mutableData.Value.ToString());
+                }
+                // 1을 더함
+                currentCount++;
+                mutableData.Value = currentCount;
+
+                return TransactionResult.Success(mutableData);
+            }).ContinueWith(task =>
+            {
+                if (task.IsCompleted)
+                {
+                    Debug.Log($"{gameType} updated successfully in Firebase.");
+                }
+                else
+                {
+                    Debug.LogError($"Failed to update {gameType} in Firebase: " + task.Exception);
+                }
+            });
+    }   
+
+    public void UploadSelection(string gameType, int targetActorNumber) // Loader.FindTopScorerPredictors(gameType)
+    {
+        // roomCode.gameType.ActorNumber.Selection 해당 경로에 ActorNumber가 투표한 플레이어(targetActorNumber) 저장.
+        // gameType <= {"MiniGame1", "MiniGame2"}
+
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        DatabaseReference selectionRef = databaseReference
+            .Child(roomCode)
+            .Child(gameType)
+            .Child(PhotonNetwork.LocalPlayer.ActorNumber.ToString())
+            .Child("Selection");
+
+        Debug.Log($"selectionRef :: {selectionRef}");
+        Debug.Log($"targetActorNumber :: {targetActorNumber}");
+        Debug.Log($"gameType :: {gameType}");
+
+        selectionRef.SetValueAsync(targetActorNumber).ContinueWith(task =>
+        {
+            if (task.IsCompleted)
+            {
+                Debug.Log($"{gameType} Selection updated successfully in Firebase for actor {targetActorNumber}.");
+            }
+            else
+            {
+                Debug.LogError($"Failed to update selection in Firebase: " + task.Exception);
+            }
+        });
+    }
+
+    public void UploadVotedCountMG1(string gameType)    // CheckAndNotifyEndOfVoting(gameType)
+    {
+        // roomCode.MiniGame1.VotedCount 해당 경로에 투표에 참여한 인원수 만큼 증가시킴.
+        // gameType <= {"MiniGame1", "MiniGame2"}
+
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        databaseReference
+            .Child(roomCode)
+            .Child(gameType)
+            .Child("VotedCount")
+            .RunTransaction(mutableData =>
+            {
+                int currentCount = 0;
+                if (mutableData.Value != null)
+                {
+                    // 기존 값이 있으면 그 값을 사용
+                    currentCount = int.Parse(mutableData.Value.ToString());
+                }
+                currentCount++;
+                mutableData.Value = currentCount;
+
+                return TransactionResult.Success(mutableData);
+            }).ContinueWith(task =>
+            {
+                if (task.IsCompleted)
+                {
+                    loader.CheckAndNotifyEndOfVoting(gameType);
+                    Debug.Log($"{gameType} updated successfully in Firebase.");
+                }
+                else
+                {
+                    Debug.LogError($"Failed to update {gameType} in Firebase: " + task.Exception);
+                }
+            });
+    }
+
+    // Secret Message
     public void UploadSecretMessage(int targetActorNumber, string message)
     {
         string roomCode = GameManager.Instance.GetRoomCode();
@@ -154,94 +262,5 @@ public class Uploader : MonoBehaviourPunCallbacks
                 Debug.LogError($"Failed to upload SecretMessage in Firebase: {task.Exception}");
             }
         });
-    }
-
-    public void UploadVoting(string scoreType)
-    {
-        string roomCode = GameManager.Instance.GetRoomCode();
-
-        // Firebase 경로에서 scoreType에 따라 점수 업데이트
-        databaseReference
-            .Child(roomCode)
-            .Child(scoreType)
-            .RunTransaction(mutableData =>
-            {
-                int currentCount = 0;
-                if (mutableData.Value != null)
-                {
-                    // 기존 값이 있으면 그 값을 사용
-                    currentCount = int.Parse(mutableData.Value.ToString());
-                }
-                // 1을 더함
-                currentCount++;
-                mutableData.Value = currentCount;
-
-                return TransactionResult.Success(mutableData);
-            }).ContinueWith(task =>
-            {
-                Debug.Log("UploadVoting continueWith check in");
-                if (task.IsCompleted)
-                {
-                    Debug.Log("UploadVoting continueWith check in task Is Completed");
-                    CheckAndNotifyEndOfVoting(scoreType);
-                    Debug.Log($"{scoreType} updated successfully in Firebase.");
-                }
-                else
-                {
-                    Debug.LogError($"Failed to update {scoreType} in Firebase: " + task.Exception);
-                }
-            });
-    }
-
-    private void CheckAndNotifyEndOfVoting(string scoreType)
-    {
-        Debug.Log("CheckAndNotifyEndOfVoting check in task Is Completed");
-        var roomRef = databaseReference.Child(GameManager.Instance.GetRoomCode()).Child(scoreType);
-
-        roomRef.GetValueAsync().ContinueWith(task =>
-        {
-            if (task.IsCompleted)
-            {
-                DataSnapshot snapshot = task.Result;
-                int currentCount = int.Parse(snapshot.Value.ToString());
-                Debug.Log($"currentCount : {currentCount}");
-                if (currentCount == GameManager.Instance.GetPlayerMaxNumber())
-                {
-
-                    UnityMainThreadDispatcher.Enqueue(() =>
-                    {
-                        if (photonView == null)
-                        {
-                            Debug.LogError("PhotonView is not assigned!");
-                            return;
-                        }
-
-                        foreach (Player player in PhotonNetwork.PlayerList)
-                        {
-                            try
-                            {
-                                photonView.RPC("ReceiveVotingEndSign", player);
-                            }
-                            catch (Exception e)
-                            {
-                                Debug.LogError($"Error: {e.Message}");
-                            }
-                        }
-                    });
-                }
-            }
-        });
-    }
-
-    [PunRPC]
-    void ReceiveVotingEndSign()
-    {
-        Debug.Log("ReceiveVotingEndSign() check in task Is Completed");
-        if (!canvasManager || !canvasManager.MiniGame1)
-        {
-            Debug.LogError("CanvasManager or MiniGame1 component is not initialized!");
-            return;
-        }
-        canvasManager.MiniGame1.GetComponent<MiniGame1>().VotingEnd();
     }
 }

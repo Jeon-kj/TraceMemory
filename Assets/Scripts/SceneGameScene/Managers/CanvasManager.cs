@@ -15,14 +15,7 @@ public class CanvasManager : MonoBehaviour
     public GameObject MiniGame3;
     public GameObject AlwaysOnCanvas;
 
-    private AuxiliaryCanvas auxiliaryCanvas;
-
-    private void Awake()
-    {
-        auxiliaryCanvas = AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>();
-    }
-
-
+    private string currCanvas = "";
 
     public void TurnOffAndOn(GameObject obj1, GameObject obj2)
     {
@@ -30,6 +23,14 @@ public class CanvasManager : MonoBehaviour
         if (obj1 != null) obj1.SetActive(false);
         if (obj2 != null) obj2.SetActive(true);
         if (AuxiliaryCanvas.activeSelf == true && obj2 != AlwaysOnCanvas && obj2 != AuxiliaryCanvas)
-            auxiliaryCanvas.UpdateCurrCanvas(obj2.name);        
+            SetCurrCanvas(obj2.name);        
     }
+
+    public void SetCurrCanvas(string canvasName)
+    {
+        currCanvas = canvasName;
+        Debug.Log($"current Canvas Name is \"{currCanvas}\"");
+    }
+
+    public string GetCurrCanvas() { return  currCanvas; }
 }

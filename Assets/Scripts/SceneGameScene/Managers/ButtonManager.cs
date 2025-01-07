@@ -47,6 +47,7 @@ public class ButtonManager : MonoBehaviour
     //In MiniGame1
     [Header("MiniGame1 Section")]
     public GameObject BaseDisplay1;
+    public GameObject WaitDisplay1;
     public GameObject ResultDisplay1;
     [Space(10)]
 
@@ -75,6 +76,7 @@ public class ButtonManager : MonoBehaviour
     private SelectPlayerCanvas selectPlayerCanvas;
     private CanvasManager canvasManager;
     private AuxiliaryCanvas auxiliaryCanvas;
+    private Uploader uploader;
 
     private void Awake()
     {
@@ -86,6 +88,7 @@ public class ButtonManager : MonoBehaviour
         selectPlayerCanvas = FindObjectOfType<SelectPlayerCanvas>();
         canvasManager = FindObjectOfType<CanvasManager>();
         auxiliaryCanvas = FindObjectOfType<AuxiliaryCanvas>();
+        uploader = FindObjectOfType<Uploader>();
     }
 
     public void OnPreGameCanvasConfirm()
@@ -453,20 +456,38 @@ public class ButtonManager : MonoBehaviour
 
         if (targetPanel == MiniGameSelectDisplay)
         {
-            Debug.Log("OnAuxiliaryCanvas check in2");
-            if (targetActorNumber != -1)
-            {
-                Debug.Log("OnAuxiliaryCanvas check in3");
-                auxiliaryCanvas.AddScore(targetActorNumber);
-                canvasManager.MiniGame1.GetComponent<MiniGame1>().CompleteSelecting();
-            }
-            else
+            if (targetActorNumber == -1)
             {
                 // 플레이어를 눌렀지만, 해당 플레이어의 ActorNumber가 Empty인 버그이므로, Error처리.
                 PhotonNetwork.Disconnect(); // 이거 말고도 따로 필요함.
             }
-            MiniGameSelectDisplay.SetActive(false);
-            BaseDisplay1.SetActive(true);
+
+            
+            string currCanvas = canvasManager.GetCurrCanvas();
+            if (currCanvas == "MiniGame1")
+            {
+                Debug.Log("currCanvas == \"MiniGame1\" check in");
+                auxiliaryCanvas.selectDisplay.SetActive(false);
+
+                if (auxiliaryCanvas.GetSelectDisplayConcept() == "가장 많이 뽑힌 사람은 누구일까요?")
+                {
+                    Debug.Log("auxiliaryCanvas.GetSelectDisplayConcept() == \"가장 많이 뽑힌 사람은 누구일까요?\" check in");
+                    uploader.UploadSelection(currCanvas, targetActorNumber);
+                    canvasManager.MiniGame1.GetComponent<MiniGame1>().CompleteSelecting();
+                    ResultDisplay1.SetActive(true);
+                }
+                else
+                {
+                    Debug.Log("else check in");
+                    uploader.UploadReceivedVotesMG1(currCanvas, targetActorNumber);
+                    canvasManager.MiniGame1.GetComponent<MiniGame1>().CompleteSelecting();
+                    auxiliaryCanvas.SetSelectDisplayConcept("가장 많이 뽑힌 사람은 누구일까요?");
+                    BaseDisplay1.SetActive(false);
+                    WaitDisplay1.SetActive(true);
+                }
+            }
+
+            
             Debug.Log("OnAuxiliaryCanvas check out");
         }
     }
