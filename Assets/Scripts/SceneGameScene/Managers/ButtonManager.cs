@@ -395,10 +395,6 @@ public class ButtonManager : MonoBehaviour
         if (buttonText.text == "Àü¼Û")
         {
             selectPlayerCanvas.SendSecretMessage(targetActorNumber, message.text);
-            Debug.Log($"@@@@@@@message.text :: {message.text}");
-            message.text = "";
-            Debug.Log($"@@@@@@@AFTERmessage.text :: {message.text}");
-            Canvas.ForceUpdateCanvases();
 
             messageScreen.SetActive(false);
             SecretMessageDisplay.SetActive(false);
