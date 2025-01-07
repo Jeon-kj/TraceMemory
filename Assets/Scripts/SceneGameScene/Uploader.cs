@@ -133,7 +133,7 @@ public class Uploader : MonoBehaviourPunCallbacks
     }
 
     // MiniGame
-    public void UploadReceivedVotesMG1(string gameType, int targetActorNumber)  // Loader.FindTopScorers(gameType)
+    public void UploadReceivedVotesMG1(int targetActorNumber)  // Loader.FindTopScorers(gameType)
     {
         // roomCode.gameType2.ActorNumber.ReceivedVotes 해당 경로에 targetActorNumber가 받은 투표 수를 저장.
         // gameType <= {"MiniGame1", "MiniGame2"}
@@ -163,16 +163,16 @@ public class Uploader : MonoBehaviourPunCallbacks
             {
                 if (task.IsCompleted)
                 {
-                    Debug.Log($"{gameType} updated successfully in Firebase.");
+                    Debug.Log($"MiniGame1 updated successfully in Firebase.");
                 }
                 else
                 {
-                    Debug.LogError($"Failed to update {gameType} in Firebase: " + task.Exception);
+                    Debug.LogError($"Failed to update MiniGame1 in Firebase: " + task.Exception);
                 }
             });
     }   
 
-    public void UploadSelection(string gameType, int targetActorNumber) // Loader.FindTopScorerPredictors(gameType)
+    public void UploadSelectionMG1(int targetActorNumber) // Loader.FindTopScorerPredictors(gameType)
     {
         // roomCode.gameType.ActorNumber.Selection 해당 경로에 ActorNumber가 투표한 플레이어(targetActorNumber) 저장.
         // gameType <= {"MiniGame1", "MiniGame2"}
@@ -181,19 +181,19 @@ public class Uploader : MonoBehaviourPunCallbacks
 
         DatabaseReference selectionRef = databaseReference
             .Child(roomCode)
-            .Child(gameType)
+            .Child("MiniGame1")
             .Child(PhotonNetwork.LocalPlayer.ActorNumber.ToString())
             .Child("Selection");
 
         Debug.Log($"selectionRef :: {selectionRef}");
         Debug.Log($"targetActorNumber :: {targetActorNumber}");
-        Debug.Log($"gameType :: {gameType}");
+        Debug.Log($"gameType :: MiniGame1");
 
         selectionRef.SetValueAsync(targetActorNumber).ContinueWith(task =>
         {
             if (task.IsCompleted)
             {
-                Debug.Log($"{gameType} Selection updated successfully in Firebase for actor {targetActorNumber}.");
+                Debug.Log($"MiniGame1 Selection updated successfully in Firebase for actor {targetActorNumber}.");
             }
             else
             {
@@ -202,7 +202,7 @@ public class Uploader : MonoBehaviourPunCallbacks
         });
     }
 
-    public void UploadVotedCountMG1(string gameType)    // CheckAndNotifyEndOfVoting(gameType)
+    public void UploadVotedCount(string gameType)    // CheckAndNotifyEndOfVoting(gameType)
     {
         // roomCode.MiniGame1.VotedCount 해당 경로에 투표에 참여한 인원수 만큼 증가시킴.
         // gameType <= {"MiniGame1", "MiniGame2"}
@@ -237,6 +237,48 @@ public class Uploader : MonoBehaviourPunCallbacks
                     Debug.LogError($"Failed to update {gameType} in Firebase: " + task.Exception);
                 }
             });
+    }
+
+    public void UploadPlayerChoiceMG2(int index)  // FindChoiceAndPlayer()
+    {
+        // roomCode.MiniGame2.index 해당 경로에 해당 인덱스의 선택지를 선택한 플레이어의 ActorNumber를 저장.
+        // index <= {0,1}
+        string roomCode = GameManager.Instance.GetRoomCode();
+        int actorNumber = PhotonNetwork.LocalPlayer.ActorNumber;
+
+        // Firebase 경로에서 gameType에 따라 점수 업데이트
+        DatabaseReference scoreRef = databaseReference
+            .Child(roomCode)
+            .Child("MiniGame2")
+            .Child(index.ToString());
+
+        scoreRef.RunTransaction(mutableData =>
+        {
+            List<object> players = mutableData.Value as List<object>;
+            if (players == null)
+            {
+                players = new List<object>();
+            }
+
+            // 현재 플레이어의 ActorNumber가 리스트에 없다면 추가
+            if (!players.Contains(actorNumber))
+            {
+                players.Add(actorNumber);
+            }
+
+            mutableData.Value = players;
+            return TransactionResult.Success(mutableData);
+        }).ContinueWith(task =>
+        {
+            if (task.IsCompleted)
+            {
+                Debug.Log($"Player {actorNumber} choice for MiniGame2 updated successfully in Firebase.");
+            }
+            else
+            {
+                Debug.LogError($"Failed to update player choice for MiniGame2 in Firebase: " + task.Exception);
+            }
+        });
     }
 
     // Secret Message

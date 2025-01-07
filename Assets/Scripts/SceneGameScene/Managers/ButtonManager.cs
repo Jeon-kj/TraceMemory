@@ -54,6 +54,7 @@ public class ButtonManager : MonoBehaviour
     //In MiniGame2
     [Header("MiniGame2 Section")]
     public GameObject BaseDisplay2;
+    public GameObject WaitDisplay2;
     public GameObject ResultDisplay2;
     [Space(10)]
 
@@ -472,15 +473,15 @@ public class ButtonManager : MonoBehaviour
                 if (auxiliaryCanvas.GetSelectDisplayConcept() == "가장 많이 뽑힌 사람은 누구일까요?")
                 {
                     Debug.Log("auxiliaryCanvas.GetSelectDisplayConcept() == \"가장 많이 뽑힌 사람은 누구일까요?\" check in");
-                    uploader.UploadSelection(currCanvas, targetActorNumber);
-                    canvasManager.MiniGame1.GetComponent<MiniGame1>().CompleteSelecting();
+                    uploader.UploadSelectionMG1(targetActorNumber);
+                    canvasManager.MiniGame1.GetComponent<MiniGame1>().AfterSelection();
                     ResultDisplay1.SetActive(true);
                 }
                 else
                 {
                     Debug.Log("else check in");
-                    uploader.UploadReceivedVotesMG1(currCanvas, targetActorNumber);
-                    canvasManager.MiniGame1.GetComponent<MiniGame1>().CompleteSelecting();
+                    uploader.UploadReceivedVotesMG1(targetActorNumber);
+                    canvasManager.MiniGame1.GetComponent<MiniGame1>().AfterSelection();
                     auxiliaryCanvas.SetSelectDisplayConcept("가장 많이 뽑힌 사람은 누구일까요?");
                     BaseDisplay1.SetActive(false);
                     WaitDisplay1.SetActive(true);
@@ -500,10 +501,46 @@ public class ButtonManager : MonoBehaviour
 
         if (targetPanel == BaseDisplay1)
         {
-            if(buttonText.text == "선택하기")
+            if (buttonText.text == "선택하기")
             {
                 MiniGameSelectDisplay.SetActive(true);
                 BaseDisplay1.SetActive(false);
+            }
+        }
+        else if (targetPanel == ResultDisplay1)
+        {
+            if (buttonText.text == "확인")
+            {
+                canvasManager.TurnOffAndOn(canvasManager.MiniGame1, canvasManager.MiniGame2);
+            }
+        }
+    }
+
+    public void OnMiniGame2Canvas()
+    {
+        GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
+        GameObject targetPanel = clickedButton.transform.parent.gameObject;
+        Text buttonText = clickedButton.GetComponentInChildren<Text>();
+
+        if (targetPanel == BaseDisplay2)
+        {
+            MiniGame2 miniGame2 = canvasManager.MiniGame2.GetComponent<MiniGame2>();
+            if (clickedButton.name == "ButtonLeft")
+            {
+                miniGame2.AfterSelection(0);
+            }
+            else if(clickedButton.name == "ButtonRight")
+            {
+                miniGame2.AfterSelection(1);
+            }
+            BaseDisplay2.SetActive(false);
+            WaitDisplay2.SetActive(true);
+        }
+        else if(targetPanel == ResultDisplay2)
+        {
+            if (buttonText.text == "확인")
+            {
+                //canvasManager.TurnOffAndOn(canvasManager.MiniGame2, canvasManager.MiniGame2);
             }
         }
     }

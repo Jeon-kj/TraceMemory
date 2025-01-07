@@ -10,15 +10,6 @@ public class AuxiliaryCanvas : MonoBehaviour
     public GameObject roomDisplay;
     public GameObject selectDisplay;
 
-    private string currCanvas = "";
-
-    Uploader uploader;
-
-    private void Awake()
-    {
-        uploader = FindObjectOfType<Uploader>();
-    }
-
     private void Start()
     {
         UpdatePlayerDisplay();

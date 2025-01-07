@@ -42,9 +42,9 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
 
     }
 
-    public void InitializeGameState()
+    private void InitializeGameState()
     {
-        if (PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey("questionIndex"))
+        if (PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey("questionIndexMG1"))
         {
             SyncGameState();
         }
@@ -60,7 +60,7 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
 
         try
         {
-            ExitGames.Client.Photon.Hashtable propsToSet = new ExitGames.Client.Photon.Hashtable() { { "questionIndex", index } };
+            ExitGames.Client.Photon.Hashtable propsToSet = new ExitGames.Client.Photon.Hashtable() { { "questionIndexMG1", index } };
             PhotonNetwork.CurrentRoom.SetCustomProperties(propsToSet);
         }
         catch (Exception e)
@@ -71,9 +71,9 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
 
     void SyncGameState()
     {
-        if (PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey("questionIndex"))
+        if (PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey("questionIndexMG1"))
         {
-            int questionIndex = (int)PhotonNetwork.CurrentRoom.CustomProperties["questionIndex"];
+            int questionIndex = (int)PhotonNetwork.CurrentRoom.CustomProperties["questionIndexMG1"];
             // 해당 인덱스를 사용하여 게임 상태를 업데이트
             PickedQuestion = questionList[questionIndex];
 
@@ -88,19 +88,19 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
 
     public override void OnRoomPropertiesUpdate(ExitGames.Client.Photon.Hashtable propertiesThatChanged)
     {
-        if (propertiesThatChanged.ContainsKey("questionIndex"))
+        if (propertiesThatChanged.ContainsKey("questionIndexMG1"))
         {
             SyncGameState();
         }
     }
 
-
-    public void CompleteSelecting()
+    public void AfterSelection()
     {
-        // 본 플레이어는 클릭을 하였음. O
-        // 이후에 뭘 해야할 지, ButtonManager에서 호출용도.  O
+        // 투표를 완료한 상태임을 서버에 알려야 함. O
+        // 서버는 그 수를 세서 총 인원이 맞으면 투표를 종료 O
+        // 시간이 다 되면 투표를 종료. 
         WaitAnoterPlayer();
-        CompleteSignSendToServer();
+        uploader.UploadVotedCount("MiniGame1");
     }
 
     public void WaitAnoterPlayer()
@@ -110,15 +110,7 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
         baseDisplay.transform.Find("Question").GetComponent<Text>().text = "선택 완료했습니다!";
     }
 
-    public void CompleteSignSendToServer()
-    {
-        // 투표를 완료한 상태임을 서버에 알려야 함. O
-        // 서버는 그 수를 세서 총 인원이 맞으면 투표를 종료 O
-        // 시간이 다 되면 투표를 종료. 
-        uploader.UploadVotedCountMG1("MiniGame1");
-    }
-
-    public void VotingEnd()
+    public void OnAllPlayersVoted()
     {
         if (sign == "ProcessTopScorers") ProcessTopScorers();
         else if (sign == "ProcessTopPredictors") ProcessTopPredictors();
@@ -163,6 +155,7 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
         Debug.Log($"topScorerPredictors Transform: {topScorerPredictors}");
 
         topScorer.GetComponent<Text>().text += $"예측에 성공한 플레이어는\n";
+        if (topScorerPredictors.Count == 0) topScorer.GetComponent<Text>().text += "아무도 없습니다.";
 
         foreach (int predictor in topScorerPredictors)
         {
@@ -181,5 +174,6 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
     }
 
     public void SetSign(string s) { sign = s; }
+
     public string GetSign() { return sign; }
 }

@@ -334,8 +334,8 @@ public class Loader : MonoBehaviourPunCallbacks
     }
 
 
-    // About MiniGame1 (roodCode.MiniGame1.ActorNumber)
-    public async Task<(List<int> topScorers, int highestScore)> FindTopScorers(string gameType) // Uploader.UploadReceivedVotesMG1(gameType, targetActorNumber)
+    // About MiniGame
+    public async Task<(List<int> topScorers, int highestScore)> FindTopScorers(string gameType) // Uploader.UploadReceivedVotesMG1(targetActorNumber)
     {
         // roomCode.gameType2.ActorNumber.ReceivedVotes 해당 경로에서 가장 많은 투표를 받은 플레이어의 점수와 ActorNumber를 반환
         // gameType <= {"MiniGame1", "MiniGame2"}
@@ -371,7 +371,7 @@ public class Loader : MonoBehaviourPunCallbacks
         return (topScorers, highestScore);
     }
 
-    public async Task<List<int>> FindTopScorerPredictors(string gameType, List<int> topScorer) // Uploader.UploadSelection(gameType, targetActorNumber)
+    public async Task<List<int>> FindTopScorerPredictors(string gameType, List<int> topScorer) // Uploader.UploadSelectionMG1(targetActorNumber)
     {
         // roomCode.gameType.ActorNumber.Selection 해당 경로에 TopScorers의 ActorNumber와 같은 값을 가진 플레이어 찾아냄.
         // gameType <= {"MiniGame1", "MiniGame2"}
@@ -402,7 +402,7 @@ public class Loader : MonoBehaviourPunCallbacks
         return predictors;
     }
 
-    public void CheckAndNotifyEndOfVoting(string gameType)  // UploadVotedCountMG1(gameType)
+    public void CheckAndNotifyEndOfVoting(string gameType)  // UploadVotedCount(gameType)
     {
         // roomCode.MiniGame1.VotedCount 해당 경로에, 투표에 참여한 인원의 수가 전체 플레이어 수와 똑같으면 RPC처리.
         // gameType <= {"MiniGame1", "MiniGame2"}
@@ -426,7 +426,8 @@ public class Loader : MonoBehaviourPunCallbacks
                             Debug.LogError("PhotonView is not assigned!");
                             return;
                         }
-
+                        
+                        // 코드를 재활용하기 위해 변수를 0으로 초기화.
                         try
                         {
                             roomRef.SetValueAsync(0).ContinueWith(setTask =>
@@ -446,7 +447,7 @@ public class Loader : MonoBehaviourPunCallbacks
                         {
                             try
                             {                                
-                                photonView.RPC("ReceiveVotingEndSign", player);
+                                photonView.RPC("ReceiveVotingEndSign", player, gameType);
                             }
                             catch (Exception e)
                             {
@@ -460,9 +461,69 @@ public class Loader : MonoBehaviourPunCallbacks
         });
     }
 
-    void SelectSign()
+    public async Task<(int leastCountChoiceIdx, List<int> players)> FindChoiceAndPlayer()   // UploadPlayerChoiceMG2(index)
     {
-        Debug.Log("SelectSign started");
+        // roomCode.MiniGame2.index 해당 경로에서 선택지를 선택한 플레이어의 수를 셈.
+        // 가장 적게 선택된 선택지의 인덱스와 해당 선택지를 선택한 플레이어들을 반환함.
+        // index <= {0,1}
+        Debug.Log("FindLeastCountChoice Started");
+
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        int leastCountChoiceIdx = -1;
+        List<int> players = new List<int>();
+        int leastCount = -1;
+
+        for(int i=0; i<2; i++)
+        {
+            var selectionRef = databaseReference.Child(roomCode).Child("MiniGame2").Child(i.ToString());
+            DataSnapshot snapshot = await selectionRef.GetValueAsync();
+            
+
+            if (snapshot.Exists)
+            {
+                var data = snapshot.Value as Dictionary<string, object>;
+
+                if (data != null)
+                {
+                    int dataCount = data.Count;
+                    if(leastCount == -1 || leastCount > dataCount)
+                    {
+                        leastCount = dataCount;
+                        leastCountChoiceIdx = i;
+                    }
+
+                    if (leastCountChoiceIdx != i) continue;
+                    else players.Clear();
+
+                    foreach (var item in data)
+                    {
+                        string actorNumber = item.Value as string;
+                        players.Add(int.Parse(actorNumber));
+                        Debug.Log($"ActorNumber: {actorNumber}");
+                    }
+                }
+                else
+                {
+                    // 아무도 선택하지 않은 선택지가 있음.
+                    leastCount = 0;
+                    leastCountChoiceIdx = i;
+                    players.Clear();
+                }
+            }
+        }
+
+        if (leastCount == GameManager.Instance.GetPlayerMaxNumber() / 2)
+        {
+            // 동점 처리.
+        }
+        Debug.Log($"leastCountChoiceIdx : {leastCountChoiceIdx}, players : {players}");
+        return (leastCountChoiceIdx, players);
+    }
+
+    void SelectSignMG1()
+    {
+        Debug.Log("SelectSignMG1 started");
 
         MiniGame1 miniGame1 = canvasManager.MiniGame1.GetComponent<MiniGame1>();
         string sign = miniGame1.GetSign();
@@ -479,11 +540,10 @@ public class Loader : MonoBehaviourPunCallbacks
             sign = miniGame1.GetSign();
         }
         Debug.Log($"After SIGN :: {sign}");
-        
     }
 
     [PunRPC]
-    void ReceiveVotingEndSign()
+    void ReceiveVotingEndSign(string gameType)
     {
         Debug.Log("ReceiveVotingEndSign() check in task Is Completed");
         if (!canvasManager || !canvasManager.MiniGame1)
@@ -491,8 +551,17 @@ public class Loader : MonoBehaviourPunCallbacks
             Debug.LogError("CanvasManager or MiniGame1 component is not initialized!");
             return;
         }
-        SelectSign();
-        canvasManager.MiniGame1.GetComponent<MiniGame1>().VotingEnd();        
+
+        if (gameType == "MiniGame1")
+        {
+            SelectSignMG1();
+            canvasManager.MiniGame1.GetComponent<MiniGame1>().OnAllPlayersVoted();
+        }
+        else if (gameType == "MiniGame2")
+        {
+            canvasManager.MiniGame2.GetComponent<MiniGame2>().OnAllPlayersSelected();
+        }
+               
     }
 }
 
