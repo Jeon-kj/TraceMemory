@@ -55,7 +55,8 @@ public class PreLifeManager : MonoBehaviourPunCallbacks
     private void Shuffle<T>(List<T> list)
     {
         System.Random rng = new System.Random();  // 난수 생성기
-        int n = list.Count;
+        //int n = list.Count;
+        int n = GameManager.Instance.GetPlayerMaxNumber()/2;
         while (n > 1)
         {
             n--;
