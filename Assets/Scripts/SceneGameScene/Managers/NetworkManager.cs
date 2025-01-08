@@ -40,7 +40,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     // Photon 서버에 연결된 후 호출됨.
     public override void OnConnectedToMaster()
     {
-        PhotonNetwork.JoinLobby(TypedLobby.Default); // 기본 로비에 연결
+        PhotonNetwork.JoinLobby(TypedLobby.Default);
     }
 
     //로비에 입장한 후 실행.

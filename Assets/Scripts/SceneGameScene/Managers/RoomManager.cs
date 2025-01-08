@@ -20,6 +20,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     private Uploader Uploader;
     private RoomDisplay roomDisplay;
     private PlayerReady playerReady;
+    private NetworkManager networkManager;
 
     public List<int> prePlayerOrder;
 
@@ -34,6 +35,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         Uploader = FindObjectOfType<Uploader>();
         roomDisplay = FindObjectOfType<RoomDisplay>();
         playerReady = FindObjectOfType<PlayerReady>();
+        networkManager = FindObjectOfType<NetworkManager>();
     }
     
     // 방만들기
@@ -102,7 +104,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     // 방 입장하기 실패 시 호출됨.
     public override void OnCreateRoomFailed(short returnCode, string message)
     {
-        Debug.LogError("Failed to create the room: " + message);
+        buttonManager.OnRoomFailed();
     }
 
     // 방 입장하기
@@ -169,7 +171,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     // 방 입장하기 실패 시 호출됨.
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
-        Debug.LogError($"Failed to join the room: {message} (Return Code: {returnCode})");
+        buttonManager.OnRoomFailed();
         // 방 입장 실패 처리
     }
 

@@ -15,6 +15,7 @@ public class ButtonManager : MonoBehaviour
     public GameObject PanelImageInput;  // ImageInput
     public GameObject PanelGenderSelect;   // GenderSelect
     public GameObject PanelRoomEntry;  // RoomEntry
+    public GameObject PanelMaxSelect;   // MaxSelect
     public GameObject PanelRoomSelect;   // RoomSelect
     public GameObject PanelLoading;   // Loading
     public GameObject PanelRoomDisplay; // RoomDisplay
@@ -121,12 +122,17 @@ public class ButtonManager : MonoBehaviour
         }
         else if (targetPanel == PanelRoomEntry)
         {
-            if (buttonText.text == "방만들기")
-            {
-                networkManager.Connect(buttonText.text);
-                PanelLoading.SetActive(true);
-            }
+            if (buttonText.text == "방만들기") PanelMaxSelect.SetActive(true); 
             else if (buttonText.text == "입장하기") PanelRoomSelect.SetActive(true);
+        }
+        else if (targetPanel == PanelMaxSelect)
+        {
+            string txt = clickedButton.GetComponentInChildren<Text>().text;
+            GameManager.Instance.SetPlayerMaxNumber(int.Parse(txt[0].ToString()));
+
+            PanelMaxSelect.SetActive(false);
+            networkManager.Connect("방만들기");
+            PanelLoading.SetActive(true);
         }
         else if (targetPanel == PanelRoomSelect)
         {
@@ -207,6 +213,11 @@ public class ButtonManager : MonoBehaviour
             PanelRoomEntry.SetActive(false);
             PanelGenderSelect.SetActive(true);
         }
+        else if(targetPanel == PanelMaxSelect)
+        {
+            PanelMaxSelect.SetActive(false);
+            PanelRoomEntry.SetActive(true);
+        }
         else if (targetPanel == PanelRoomSelect)
         {
             PanelRoomSelect.SetActive(false);
@@ -214,9 +225,7 @@ public class ButtonManager : MonoBehaviour
         }
         else if (targetPanel == PanelLoading)
         {
-            PanelLoading.SetActive(false);
-            PanelRoomEntry.SetActive(true);
-            PhotonNetwork.Disconnect();
+            ;
         }
         else if (targetPanel == PanelRoomDisplay)
         {
@@ -232,6 +241,12 @@ public class ButtonManager : MonoBehaviour
         PanelRoomSelect.SetActive(false);
         PanelLoading.SetActive(false);
         PanelRoomDisplay.SetActive(true);
+    }
+
+    public void OnRoomFailed()
+    {
+        PanelLoading.SetActive(false);
+        PhotonNetwork.Disconnect();
     }
 
     public void ReadyToStartGame()

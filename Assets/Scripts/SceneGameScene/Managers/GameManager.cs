@@ -7,7 +7,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     private string roomCode;
-    private int playerMaxNumber = 2;
+    private int playerMaxNumber = 0;
 
     // 게임 진행 관련 sign
     private bool signMG1 = false;
@@ -64,6 +64,8 @@ public class GameManager : MonoBehaviour
     public string GetRoomCode() { return roomCode; }
 
     public int GetPlayerMaxNumber() {  return playerMaxNumber; }
+
+    public void SetPlayerMaxNumber(int n) { playerMaxNumber = n; }
 
     public void SetSignMG1(bool sign) { signMG1 = sign; }
 
