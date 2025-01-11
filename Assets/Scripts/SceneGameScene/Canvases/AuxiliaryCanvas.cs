@@ -1,4 +1,6 @@
+using Firebase.Database;
 using Photon.Pun;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +11,18 @@ public class AuxiliaryCanvas : MonoBehaviour
 {
     public GameObject roomDisplay;
     public GameObject selectDisplay;
+    public GameObject timer;
+
+    Uploader uploader;
+    Loader loader;
+    CanvasManager canvasManager;
+
+    private void Awake()
+    {
+        uploader = FindObjectOfType<Uploader>();
+        loader = FindObjectOfType<Loader>();
+        canvasManager = FindObjectOfType<CanvasManager>();
+    }
 
     private void Start()
     {
@@ -17,7 +31,7 @@ public class AuxiliaryCanvas : MonoBehaviour
 
     private void UpdatePlayerDisplay()
     {
-        int maxPlayers = PhotonNetwork.CurrentRoom.MaxPlayers;
+        int maxPlayers = 6;
 
         // 모든 자식 Transform을 한 번에 가져옴 (비활성화 포함)
         Transform[] roomDisplayChildren = roomDisplay.GetComponentsInChildren<Transform>(true);
@@ -100,4 +114,45 @@ public class AuxiliaryCanvas : MonoBehaviour
         Debug.Log($"targetName : {targetName}");
         return targetName;
     }
+
+    // About Timer
+    private IEnumerator TimerCoroutine(DateTime startTime, int duration)
+    {
+        Debug.Log("TimerCoroutine");
+        TimeSpan timeLimit = TimeSpan.FromSeconds(duration);
+        while (true)
+        {
+            TimeSpan elapsedTime = DateTime.UtcNow - startTime;
+            if (elapsedTime >= timeLimit)
+            {
+                // 주어진 시간이 다 되었을 때,
+                Debug.Log("Timer ended.");
+                string currCanvas = canvasManager.GetCurrCanvas();
+                if (currCanvas == "MiniGame1")
+                    canvasManager.MiniGame1.GetComponent<MiniGame1>().TimeOver();
+                else if(currCanvas == "MiniGame2")
+                    canvasManager.MiniGame2.GetComponent<MiniGame2>().TimeOver();
+                break;
+            }
+            int remainingTime = (int)(timeLimit-elapsedTime).TotalSeconds;
+            Debug.Log("Time remaining: " + remainingTime + " seconds");
+            timer.transform.Find("Text").GetComponent<Text>().text = remainingTime.ToString();
+            yield return new WaitForSeconds(1); // 1초마다 업데이트
+        }
+    }
+
+    public void InitializeLocalTimer(DateTime startTime, int duration)
+    {
+        StartCoroutine(TimerCoroutine(startTime, duration));
+    }
+
+    public void StartTimer()
+    {
+        if (PhotonNetwork.IsMasterClient)
+        {
+            uploader.SetStartTime();
+        }
+        // 나머지는 Uploader.SetStartTime에서 호출하는 PunRPC를 통해 동기화.
+    }
+
 }

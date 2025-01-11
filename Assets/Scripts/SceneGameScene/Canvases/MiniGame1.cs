@@ -42,6 +42,15 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
 
     }
 
+    /* 왜 얘 있으면 OnRoomPropertiesUpdate 호출 안되지?
+    public override void OnEnable()
+    {
+        waitDisplay.SetActive(true);
+        baseDisplay.SetActive(false);
+        resultDisplay.SetActive(false);
+        uploader.UploadReadyCount("MiniGame1");
+    }*/
+
     private void InitializeGameState()
     {
         if (PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey("questionIndexMG1"))
@@ -57,7 +66,6 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
     private void PickQuestion()
     {
         int index = random.Next(questionList.Length);
-
         try
         {
             ExitGames.Client.Photon.Hashtable propsToSet = new ExitGames.Client.Photon.Hashtable() { { "questionIndexMG1", index } };
@@ -105,7 +113,7 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
 
     public void WaitAnoterPlayer()
     {
-        baseDisplay.gameObject.SetActive(true);
+        baseDisplay.SetActive(true);
         baseDisplay.transform.Find("Button").gameObject.SetActive(false);
         baseDisplay.transform.Find("Question").GetComponent<Text>().text = "선택 완료했습니다!";
     }
@@ -176,4 +184,21 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
     public void SetSign(string s) { sign = s; }
 
     public string GetSign() { return sign; }
+
+    public void StartMiniGame()
+    {
+        waitDisplay.SetActive(false);
+        baseDisplay.SetActive(true);
+        // timer 시작 함수.
+        AuxiliaryCanvas auxiliaryCanvas = canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>();        
+        auxiliaryCanvas.StartTimer();
+    }
+
+    public void TimeOver()
+    {
+        AuxiliaryCanvas auxiliaryCanvas = canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>();
+        baseDisplay.SetActive(false);
+        auxiliaryCanvas.timer.SetActive(false);
+        auxiliaryCanvas.selectDisplay.SetActive(true);
+    }
 }

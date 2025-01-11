@@ -44,7 +44,7 @@ public class SelectPlayerCanvas : MonoBehaviour
 
     private void UpdatePartnerDisplay(Transform display, string gender)
     {
-        int maxPlayers = PhotonNetwork.CurrentRoom.MaxPlayers / 2;
+        int maxPlayers = 6 / 2;
 
         for (int i = 0; i < maxPlayers; i++)
         {

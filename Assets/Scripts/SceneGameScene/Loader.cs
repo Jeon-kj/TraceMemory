@@ -9,6 +9,7 @@ using Firebase.Database;
 using System.Collections.Generic;
 using Photon.Pun;
 using Photon.Realtime;
+using System.Globalization;
 
 public class Loader : MonoBehaviourPunCallbacks
 {
@@ -74,6 +75,25 @@ public class Loader : MonoBehaviourPunCallbacks
 
             // UI 작업을 메인 스레드로 전달
             targetImage.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+        }
+    }
+
+    // 방 인원수 공유
+    public async Task<int> LoadPlayerMaxNumber()  // UploadPlayerMaxNumber(n)
+    {
+        var roomRef = databaseReference.Child(GameManager.Instance.GetRoomCode()).Child("PlayerMaxNumber");
+
+        // 값을 비동기적으로 가져옵니다.
+        var snapshot = await roomRef.GetValueAsync();
+        if (snapshot.Exists)
+        {
+            int playerMaxNumber = int.Parse(snapshot.Value.ToString());
+            return playerMaxNumber;
+        }
+        else
+        {
+            Debug.LogError("Failed to load PlayerMaxNumber: Snapshot does not exist.");
+            return -1;  // 오류 또는 존재하지 않는 경우에 대한 기본값.
         }
     }
 
@@ -333,6 +353,84 @@ public class Loader : MonoBehaviourPunCallbacks
         });
     }
 
+    // All Player Ready?
+    public void CheckAndNotifyEndOfReady(string type)
+    {
+        // roomCode.MiniGame1.VotedCount 해당 경로에, 투표에 참여한 인원의 수가 전체 플레이어 수와 똑같으면 RPC처리.
+        // gameType <= {"MiniGame1", "MiniGame2"}
+        var roomRef = databaseReference.Child(GameManager.Instance.GetRoomCode()).Child(type).Child("ReadyCount");
+        roomRef.GetValueAsync().ContinueWith(task =>
+        {
+            if (task.IsCompleted)
+            {
+                DataSnapshot snapshot = task.Result;
+                int currentCount = int.Parse(snapshot.Value.ToString());
+                
+                if (currentCount == GameManager.Instance.GetPlayerMaxNumber())
+                {
+                    UnityMainThreadDispatcher.Enqueue(() =>
+                    {
+                        if (photonView == null)
+                        {
+                            Debug.LogError("PhotonView is not assigned!");
+                            return;
+                        }
+
+                        // 코드를 재활용하기 위해 변수를 0으로 초기화.
+                        try
+                        {
+                            roomRef.SetValueAsync(0).ContinueWith(setTask =>
+                            {
+                                if (setTask.IsFaulted)
+                                {
+                                    Debug.LogError($"Failed to set value in Firebase: {setTask.Exception}");
+                                }
+                            });
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogError($"Error Find {e}");
+                        }
+
+                        foreach (Player player in PhotonNetwork.PlayerList)
+                        {                        
+                            try
+                            {
+                                photonView.RPC("ReadyToStart", player, type);
+                            }
+                            catch (Exception e)
+                            {
+                                Debug.LogError($"Error: {e.Message}");
+                            }
+                        }
+                    });
+
+                }
+            }
+        });
+    }
+
+    [PunRPC]
+    void ReadyToStart(string type)
+    {
+        if (type == "MiniGame1")
+        {
+            canvasManager.MiniGame1.GetComponent<MiniGame1>().StartMiniGame();
+        }
+        else if (type == "MiniGame2")
+        {
+            canvasManager.MiniGame2.GetComponent<MiniGame2>().StartMiniGame();
+        }
+        else if(type == "MiniGame1Timer")
+        {
+            canvasManager.MiniGame1.GetComponent<MiniGame1>().TimeOver();
+        }
+        else if (type == "MiniGame2Timer")
+        {
+            canvasManager.MiniGame2.GetComponent<MiniGame2>().TimeOver();
+        }
+
+    }
 
     // About MiniGame
     public async Task<(List<int> topScorers, int highestScore)> FindTopScorers(string gameType) // Uploader.UploadReceivedVotesMG1(targetActorNumber)
@@ -544,7 +642,6 @@ public class Loader : MonoBehaviourPunCallbacks
     [PunRPC]
     void ReceiveVotingEndSign(string gameType)
     {
-        Debug.Log("ReceiveVotingEndSign() check in task Is Completed");
         if (!canvasManager || !canvasManager.MiniGame1)
         {
             Debug.LogError("CanvasManager or MiniGame1 component is not initialized!");
@@ -561,6 +658,34 @@ public class Loader : MonoBehaviourPunCallbacks
             canvasManager.MiniGame2.GetComponent<MiniGame2>().OnAllPlayersSelected();
         }
                
+    }
+
+    //About Timer
+    public void GetStartTime()
+    {
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        DatabaseReference timerRef = databaseReference
+            .Child(roomCode)
+            .Child("StartTime");
+
+        timerRef.GetValueAsync().ContinueWith(task => {
+            if (task.IsFaulted)
+            {
+                Debug.LogError("Error reading timer start time: " + task.Exception);
+            }
+            else if (task.Result.Value != null)
+            {
+                DateTime startTime = DateTime.Parse(task.Result.Value.ToString());
+
+                UnityMainThreadDispatcher.Enqueue(() =>
+                {
+                    AuxiliaryCanvas auxiliaryCanvas = canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>();
+                    auxiliaryCanvas.timer.SetActive(true);
+                    auxiliaryCanvas.InitializeLocalTimer(startTime, 60); // 타이머를 60초로 설정    
+                });
+            }
+        });
     }
 }
 

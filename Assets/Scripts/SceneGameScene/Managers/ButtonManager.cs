@@ -128,7 +128,10 @@ public class ButtonManager : MonoBehaviour
         else if (targetPanel == PanelMaxSelect)
         {
             string txt = clickedButton.GetComponentInChildren<Text>().text;
-            GameManager.Instance.SetPlayerMaxNumber(int.Parse(txt[0].ToString()));
+
+            if(txt == "2인") GameManager.Instance.SetPlayerMaxNumber(2);
+            else if (txt == "4인") GameManager.Instance.SetPlayerMaxNumber(4);
+            else if (txt == "6인") GameManager.Instance.SetPlayerMaxNumber(6);
 
             PanelMaxSelect.SetActive(false);
             networkManager.Connect("방만들기");
@@ -370,9 +373,16 @@ public class ButtonManager : MonoBehaviour
             LoveCardDisplay.SetActive(false);
 
             if (!GameManager.Instance.GetSignMG1())
+            {
                 canvasManager.TurnOffAndOn(canvasManager.SelectPlayerCanvas, canvasManager.MiniGame1);
+                uploader.UploadReadyCount("MiniGame1");
+            }                
             else if (!GameManager.Instance.GetSignMG2())
+            {
                 canvasManager.TurnOffAndOn(canvasManager.SelectPlayerCanvas, canvasManager.MiniGame2);
+                uploader.UploadReadyCount("MiniGame2");
+            }
+                
             // else
         }
 
@@ -460,27 +470,24 @@ public class ButtonManager : MonoBehaviour
         GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
         GameObject targetPanel = clickedButton.transform.parent.parent.parent.gameObject;
 
-        GameObject targetPlayer = clickedButton.transform.parent.parent.gameObject;
-        Text actorNumberText = targetPlayer.transform.Find("PlayerActorNumber").GetComponent<Text>();
-
-        // 테스트용 Mock 데이터 설정
-        int targetActorNumber = actorNumberText.text == "Empty" ? GetMockActorNumber() : int.Parse(actorNumberText.text);
-
-        Debug.Log("OnAuxiliaryCanvas check in1" + " : " + targetPanel);
-
         if (targetPanel == MiniGameSelectDisplay)
         {
+            GameObject targetPlayer = clickedButton.transform.parent.parent.gameObject;
+            Text actorNumberText = targetPlayer.transform.Find("PlayerActorNumber").GetComponent<Text>();
+
+            // 테스트용 Mock 데이터 설정
+            int targetActorNumber = actorNumberText.text == "Empty" ? GetMockActorNumber() : int.Parse(actorNumberText.text);
+
             if (targetActorNumber == -1)
             {
                 // 플레이어를 눌렀지만, 해당 플레이어의 ActorNumber가 Empty인 버그이므로, Error처리.
                 PhotonNetwork.Disconnect(); // 이거 말고도 따로 필요함.
             }
 
-            
+
             string currCanvas = canvasManager.GetCurrCanvas();
             if (currCanvas == "MiniGame1")
             {
-                Debug.Log("currCanvas == \"MiniGame1\" check in");
                 auxiliaryCanvas.selectDisplay.SetActive(false);
 
                 if (auxiliaryCanvas.GetSelectDisplayConcept() == "가장 많이 뽑힌 사람은 누구일까요?")
@@ -500,9 +507,15 @@ public class ButtonManager : MonoBehaviour
                     WaitDisplay1.SetActive(true);
                 }
             }
-
-            
+            // MiniGame2는 필요없음.
             Debug.Log("OnAuxiliaryCanvas check out");
+        }
+
+        else if (targetPanel == Timer)
+        {
+            Debug.Log("타겟판넬 타이머 작동~~~ 버튼 매니저 양호.");
+            string type = canvasManager.GetCurrCanvas() + "Timer";
+            uploader.UploadReadyCount(type);
         }
     }
 

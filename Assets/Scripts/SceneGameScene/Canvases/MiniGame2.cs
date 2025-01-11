@@ -162,4 +162,23 @@ public class MiniGame2 : MonoBehaviourPunCallbacks
         waitDisplay.SetActive(false);
         resultDisplay.SetActive(true);
     }
+
+    public void StartMiniGame()
+    {
+        waitDisplay.SetActive(false);
+        baseDisplay.SetActive(true);
+        // timer 시작 함수.
+        /*
+        AuxiliaryCanvas auxiliaryCanvas = canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>();
+        auxiliaryCanvas.StartTimer();
+        */
+    }
+
+    public void TimeOver()
+    {
+        AuxiliaryCanvas auxiliaryCanvas = canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>();
+        baseDisplay.SetActive(false);
+        auxiliaryCanvas.timer.SetActive(false);
+        auxiliaryCanvas.selectDisplay.SetActive(true);
+    }
 }

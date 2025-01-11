@@ -13,10 +13,12 @@ public class Uploader : MonoBehaviourPunCallbacks
     private FirebaseStorage storage;
     private DatabaseReference databaseReference;
     private Loader loader;
+    private CanvasManager canvasManager;
 
     private void Awake()
     {
         loader = FindObjectOfType<Loader>();
+        canvasManager = FindObjectOfType<CanvasManager>();
     }
 
     async void Start()
@@ -48,7 +50,6 @@ public class Uploader : MonoBehaviourPunCallbacks
         }
     }
 
-
     public void GetImageUrl(string fileName, System.Action<string> onUrlReceived)
     {
         StorageReference storageRef = storage.RootReference;
@@ -63,6 +64,26 @@ public class Uploader : MonoBehaviourPunCallbacks
             else
             {
                 Debug.LogError(task.Exception.ToString());
+            }
+        });
+    }
+
+    // 방 인원수 공유
+    public void UploadPlayerMaxNumber(string roomCode, int n)
+    {
+        DatabaseReference selectionRef = databaseReference
+            .Child(roomCode)
+            .Child("PlayerMaxNumber");
+
+        selectionRef.SetValueAsync(n).ContinueWith(task =>
+        {
+            if (task.IsCompleted)
+            {
+                Debug.Log($"{roomCode} room maximum number of players is {n}");
+            }
+            else
+            {
+                Debug.LogError($"Failed to update PlayerMaxNumber in Firebase: " + task.Exception);
             }
         });
     }
@@ -130,6 +151,44 @@ public class Uploader : MonoBehaviourPunCallbacks
                 Debug.LogError($"Failed to update {scoreType} in Firebase: " + task.Exception);
             }
         });
+    }
+
+    //All Player Ready?
+    public void UploadReadyCount(string type)    // 
+    {
+        // roomCode.MiniGame1.VotedCount 해당 경로에 투표에 참여한 인원수 만큼 증가시킴.
+        // gameType <= {"MiniGame1", "MiniGame2"}
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        databaseReference
+            .Child(roomCode)
+            .Child(type)
+            .Child("ReadyCount")
+            .RunTransaction(mutableData =>
+            {
+                
+                int currentCount = 0;
+                if (mutableData.Value != null)
+                {
+                    // 기존 값이 있으면 그 값을 사용
+                    currentCount = int.Parse(mutableData.Value.ToString());
+                }
+                currentCount++;
+                mutableData.Value = currentCount;
+
+                return TransactionResult.Success(mutableData);
+            }).ContinueWith(task =>
+            {
+                if (task.IsCompleted)
+                {
+                    loader.CheckAndNotifyEndOfReady(type);
+                    Debug.Log($"{type} updated successfully in Firebase.");
+                }
+                else
+                {
+                    Debug.LogError($"Failed to update {type} in Firebase: " + task.Exception);
+                }
+            });
     }
 
     // MiniGame
@@ -304,5 +363,52 @@ public class Uploader : MonoBehaviourPunCallbacks
                 Debug.LogError($"Failed to upload SecretMessage in Firebase: {task.Exception}");
             }
         });
+    }
+
+
+    // About Timer
+    public void SetStartTime()
+    {
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        DatabaseReference timerRef = databaseReference
+            .Child(roomCode)
+            .Child("StartTime");
+
+        // 현재 UTC 시간을 시작 시간으로 설정합니다.
+        string startTime = DateTime.UtcNow.ToString();
+
+        // 타이머 노드에 시작 시간을 저장합니다.
+        timerRef.SetValueAsync(startTime).ContinueWith(task => {
+            if (task.IsFaulted)
+            {
+                // 오류 처리
+                Debug.LogError("Error setting timer start time: " + task.Exception);
+            }
+            else
+            {
+                // 성공적으로 시간 설정
+                UnityMainThreadDispatcher.Enqueue(() =>
+                {
+                    AuxiliaryCanvas auxiliaryCanvas = canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>();
+                    foreach (Player player in PhotonNetwork.PlayerList)
+                    {
+                        photonView.RPC("AsyncTimer", player);
+                    }
+                });
+            }
+        });
+    }
+
+    [PunRPC]
+    void AsyncTimer()
+    {
+        /*
+        if (!PhotonNetwork.IsMasterClient)이건 왜 안될까?
+        {
+            loader.GetStartTime(); 
+        }
+        */
+        loader.GetStartTime();
     }
 }

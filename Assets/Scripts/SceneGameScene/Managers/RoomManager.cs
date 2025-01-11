@@ -17,7 +17,8 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     private PlayerProperties playerProperties;
     private ButtonManager buttonManager;
-    private Uploader Uploader;
+    private Uploader uploader;
+    private Loader loader;
     private RoomDisplay roomDisplay;
     private PlayerReady playerReady;
     private NetworkManager networkManager;
@@ -32,7 +33,8 @@ public class RoomManager : MonoBehaviourPunCallbacks
     {
         playerProperties = FindObjectOfType<PlayerProperties>();
         buttonManager = FindObjectOfType<ButtonManager>();
-        Uploader = FindObjectOfType<Uploader>();
+        uploader = FindObjectOfType<Uploader>();
+        loader = FindObjectOfType<Loader>();
         roomDisplay = FindObjectOfType<RoomDisplay>();
         playerReady = FindObjectOfType<PlayerReady>();
         networkManager = FindObjectOfType<NetworkManager>();
@@ -41,9 +43,11 @@ public class RoomManager : MonoBehaviourPunCallbacks
     // 방만들기
     public void CreateRoom()
     {
+        int maxPlayer = GameManager.Instance.GetPlayerMaxNumber();
         RoomOptions roomOptions = new RoomOptions();
-        roomOptions.MaxPlayers = 6; // 방의 최대 플레이어 수 설정
+        roomOptions.MaxPlayers = maxPlayer; // 방의 최대 플레이어 수 설정
         roomCode = GenerateRoomCode();
+        uploader.UploadPlayerMaxNumber(roomCode, maxPlayer);
         PhotonNetwork.CreateRoom(roomCode, roomOptions, TypedLobby.Default);
     }
 
@@ -118,6 +122,9 @@ public class RoomManager : MonoBehaviourPunCallbacks
     public override async void OnJoinedRoom()
     {
         GameManager.Instance.SetRoomCode(roomCode);
+        // 방 최대인원 공유.
+        int maxPlayer = await loader.LoadPlayerMaxNumber();
+        GameManager.Instance.SetPlayerMaxNumber(maxPlayer);
         playerReady.OnJoinedRoom();
         prePlayerOrder = PhotonNetwork.CurrentRoom.GetPlayerOrderList();
 
@@ -144,7 +151,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         // 방에 입장 한 후로 바꿔야 오류가 발생하지 않음.
         string fileName = $"{PhotonNetwork.CurrentRoom.Name}/{playerProperties.GetName()}_ProfileImage.png";
 
-        bool isSuccessed = await Uploader.UploadImage(profileImage.EncodeToPNG(), fileName); // await로 비동기 작업 처리
+        bool isSuccessed = await uploader.UploadImage(profileImage.EncodeToPNG(), fileName); // await로 비동기 작업 처리
 
         if (isSuccessed)
         {
