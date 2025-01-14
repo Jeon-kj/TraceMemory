@@ -468,7 +468,14 @@ public class ButtonManager : MonoBehaviour
     public void OnAuxiliaryCanvas()
     {
         GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
-        GameObject targetPanel = clickedButton.transform.parent.parent.parent.gameObject;
+        // 이거 어떻게 못하나??
+        GameObject targetPanel = FindParentWithTag(clickedButton, "Panel");
+
+        if (targetPanel == null)
+        {
+            Debug.LogError("Target panel not found!");
+            return;
+        }
 
         if (targetPanel == MiniGameSelectDisplay)
         {
@@ -513,7 +520,7 @@ public class ButtonManager : MonoBehaviour
 
         else if (targetPanel == Timer)
         {
-            Debug.Log("타겟판넬 타이머 작동~~~ 버튼 매니저 양호.");
+            Timer.transform.Find("ButtonSkip").gameObject.SetActive(false);
             string type = canvasManager.GetCurrCanvas() + "Timer";
             uploader.UploadReadyCount(type);
         }
@@ -575,4 +582,21 @@ public class ButtonManager : MonoBehaviour
             }
         }
     }
+
+    private GameObject FindParentWithTag(GameObject child, string tag)
+    {
+        Transform current = child.transform;
+
+        while (current != null)
+        {
+            if (current.CompareTag(tag))
+            {
+                return current.gameObject;
+            }
+            current = current.parent;
+        }
+
+        return null; // 조건에 맞는 부모가 없을 경우
+    }
+
 }

@@ -15,13 +15,13 @@ public class Loader : MonoBehaviourPunCallbacks
 {
     private DatabaseReference databaseReference;
 
-    Uploader Uploader;
+    Uploader uploader;
     CanvasManager canvasManager;
     AlwaysOnCanvas alwaysOnCanvas;
 
     private void Awake()
     {
-        Uploader = GetComponent<Uploader>();
+        uploader = GetComponent<Uploader>();
         canvasManager = FindObjectOfType<CanvasManager>();
         alwaysOnCanvas = canvasManager.AlwaysOnCanvas.GetComponent<AlwaysOnCanvas>();
     }
@@ -35,7 +35,7 @@ public class Loader : MonoBehaviourPunCallbacks
     public void LoadPlayerImage(Image targetImage, string fileName)
     {
         // Firebase에서 URL 가져오기
-        Uploader.GetImageUrl(fileName, (imageUrl) =>
+        uploader.GetImageUrl(fileName, (imageUrl) =>
         {
             // Firebase로부터 가져온 URL을 사용하여 이미지를 로드
             UnityMainThreadDispatcher.Enqueue(() =>
@@ -365,7 +365,6 @@ public class Loader : MonoBehaviourPunCallbacks
             {
                 DataSnapshot snapshot = task.Result;
                 int currentCount = int.Parse(snapshot.Value.ToString());
-                
                 if (currentCount == GameManager.Instance.GetPlayerMaxNumber())
                 {
                     UnityMainThreadDispatcher.Enqueue(() =>
@@ -377,20 +376,7 @@ public class Loader : MonoBehaviourPunCallbacks
                         }
 
                         // 코드를 재활용하기 위해 변수를 0으로 초기화.
-                        try
-                        {
-                            roomRef.SetValueAsync(0).ContinueWith(setTask =>
-                            {
-                                if (setTask.IsFaulted)
-                                {
-                                    Debug.LogError($"Failed to set value in Firebase: {setTask.Exception}");
-                                }
-                            });
-                        }
-                        catch (Exception e)
-                        {
-                            Debug.LogError($"Error Find {e}");
-                        }
+                        uploader.InitReadyCount(type);
 
                         foreach (Player player in PhotonNetwork.PlayerList)
                         {                        
@@ -421,15 +407,10 @@ public class Loader : MonoBehaviourPunCallbacks
         {
             canvasManager.MiniGame2.GetComponent<MiniGame2>().StartMiniGame();
         }
-        else if(type == "MiniGame1Timer")
+        else if(type == "MiniGame1Timer" || type == "MiniGame2Timer")
         {
-            canvasManager.MiniGame1.GetComponent<MiniGame1>().TimeOver();
+            canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>().SetTimerSign(false);
         }
-        else if (type == "MiniGame2Timer")
-        {
-            canvasManager.MiniGame2.GetComponent<MiniGame2>().TimeOver();
-        }
-
     }
 
     // About MiniGame

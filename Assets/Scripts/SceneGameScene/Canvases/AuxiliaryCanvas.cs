@@ -13,6 +13,8 @@ public class AuxiliaryCanvas : MonoBehaviour
     public GameObject selectDisplay;
     public GameObject timer;
 
+    private bool timerSign = false;
+
     Uploader uploader;
     Loader loader;
     CanvasManager canvasManager;
@@ -123,17 +125,26 @@ public class AuxiliaryCanvas : MonoBehaviour
         while (true)
         {
             TimeSpan elapsedTime = DateTime.UtcNow - startTime;
+            
             if (elapsedTime >= timeLimit)
             {
                 // 주어진 시간이 다 되었을 때,
                 Debug.Log("Timer ended.");
+                timerSign = false;
+            }
+
+            if (timerSign == false)
+            {
                 string currCanvas = canvasManager.GetCurrCanvas();
+                uploader.InitReadyCount(currCanvas + "Timer");
+
                 if (currCanvas == "MiniGame1")
                     canvasManager.MiniGame1.GetComponent<MiniGame1>().TimeOver();
-                else if(currCanvas == "MiniGame2")
+                else if (currCanvas == "MiniGame2")
                     canvasManager.MiniGame2.GetComponent<MiniGame2>().TimeOver();
                 break;
             }
+
             int remainingTime = (int)(timeLimit-elapsedTime).TotalSeconds;
             Debug.Log("Time remaining: " + remainingTime + " seconds");
             timer.transform.Find("Text").GetComponent<Text>().text = remainingTime.ToString();
@@ -143,6 +154,7 @@ public class AuxiliaryCanvas : MonoBehaviour
 
     public void InitializeLocalTimer(DateTime startTime, int duration)
     {
+        SetTimerSign(true);
         StartCoroutine(TimerCoroutine(startTime, duration));
     }
 
@@ -155,4 +167,5 @@ public class AuxiliaryCanvas : MonoBehaviour
         // 나머지는 Uploader.SetStartTime에서 호출하는 PunRPC를 통해 동기화.
     }
 
+    public void SetTimerSign(bool sign) { timerSign = sign; }
 }

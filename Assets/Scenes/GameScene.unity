@@ -2991,7 +2991,7 @@ GameObject:
   - component: {fileID: 193364756}
   m_Layer: 5
   m_Name: LoveCardDisplay
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4136,7 +4136,7 @@ GameObject:
   - component: {fileID: 262107096}
   m_Layer: 5
   m_Name: SecretMessageDisplay
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4431,7 +4431,7 @@ GameObject:
   - component: {fileID: 272119580}
   m_Layer: 5
   m_Name: WaitDisplay
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5139,7 +5139,7 @@ GameObject:
   - component: {fileID: 318922301}
   m_Layer: 5
   m_Name: MiniGameSelectDisplay
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6852,7 +6852,7 @@ GameObject:
   - component: {fileID: 419244583}
   m_Layer: 5
   m_Name: Loading
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -8346,7 +8346,7 @@ GameObject:
   - component: {fileID: 510947611}
   m_Layer: 5
   m_Name: IntroduceMyself
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -10697,7 +10697,7 @@ GameObject:
   - component: {fileID: 716959213}
   m_Layer: 5
   m_Name: MaxSelect
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11032,7 +11032,7 @@ GameObject:
   - component: {fileID: 745398226}
   m_Layer: 5
   m_Name: BaseDisplay
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11339,7 +11339,7 @@ GameObject:
   - component: {fileID: 764645000}
   m_Layer: 5
   m_Name: Timer
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -12508,7 +12508,7 @@ GameObject:
   - component: {fileID: 828446916}
   m_Layer: 5
   m_Name: ReadyToStart
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -13156,7 +13156,7 @@ GameObject:
   - component: {fileID: 888815211}
   m_Layer: 5
   m_Name: NameInput
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -14178,7 +14178,7 @@ GameObject:
   - component: {fileID: 931585359}
   m_Layer: 5
   m_Name: RewardEffect
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -15638,7 +15638,7 @@ GameObject:
   - component: {fileID: 1033936028}
   m_Layer: 5
   m_Name: AskQuestion2
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -15813,7 +15813,7 @@ GameObject:
   - component: {fileID: 1039748230}
   m_Layer: 5
   m_Name: RoomEntry
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -17301,7 +17301,7 @@ GameObject:
   - component: {fileID: 1106861811}
   m_Layer: 5
   m_Name: ResultDisplay
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -20423,7 +20423,7 @@ GameObject:
   - component: {fileID: 1299878582}
   m_Layer: 5
   m_Name: BaseDisplay
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -21385,7 +21385,7 @@ GameObject:
   - component: {fileID: 1340946208}
   m_Layer: 5
   m_Name: AskQuestion4
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -22857,7 +22857,7 @@ GameObject:
   - component: {fileID: 1418358384}
   m_Layer: 5
   m_Name: ResultDisplay
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -23277,7 +23277,7 @@ GameObject:
   - component: {fileID: 1439865006}
   m_Layer: 5
   m_Name: BaseDisplay
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -24125,7 +24125,7 @@ GameObject:
   - component: {fileID: 1508948106}
   m_Layer: 5
   m_Name: ImageInput
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -24374,7 +24374,7 @@ GameObject:
   - component: {fileID: 1530000023}
   m_Layer: 5
   m_Name: AskQuestion3
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -25361,7 +25361,7 @@ GameObject:
   - component: {fileID: 1609991906}
   m_Layer: 5
   m_Name: RoomDisplay
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -26566,7 +26566,7 @@ GameObject:
   - component: {fileID: 1680396650}
   m_Layer: 5
   m_Name: ResultDisplay
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -27444,7 +27444,7 @@ GameObject:
   - component: {fileID: 1761973437}
   m_Layer: 5
   m_Name: RoomSelect
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -29062,7 +29062,7 @@ GameObject:
   - component: {fileID: 1871861832}
   m_Layer: 5
   m_Name: WaitDisplay
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -29139,7 +29139,7 @@ GameObject:
   - component: {fileID: 1874097215}
   m_Layer: 5
   m_Name: AskQuestion1
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -30271,7 +30271,7 @@ GameObject:
   - component: {fileID: 1943847079}
   m_Layer: 5
   m_Name: FirstImpressionDisplay
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -33733,7 +33733,7 @@ GameObject:
   - component: {fileID: 2135180930}
   m_Layer: 5
   m_Name: GenderSelect
-  m_TagString: Untagged
+  m_TagString: Panel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

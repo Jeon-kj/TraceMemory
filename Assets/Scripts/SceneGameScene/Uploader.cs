@@ -191,6 +191,25 @@ public class Uploader : MonoBehaviourPunCallbacks
             });
     }
 
+    public void InitReadyCount(string type)
+    {
+        var roomRef = databaseReference.Child(GameManager.Instance.GetRoomCode()).Child(type).Child("ReadyCount");
+        try
+        {
+            roomRef.SetValueAsync(0).ContinueWith(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    Debug.LogError($"Failed to set value in Firebase: {task.Exception}");
+                }
+            });
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error Find {e}");
+        }
+    }
+
     // MiniGame
     public void UploadReceivedVotesMG1(int targetActorNumber)  // Loader.FindTopScorers(gameType)
     {
