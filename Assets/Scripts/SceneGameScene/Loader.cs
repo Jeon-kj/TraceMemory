@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using Photon.Pun;
 using Photon.Realtime;
 using System.Globalization;
+using System.Reflection;
 
 public class Loader : MonoBehaviourPunCallbacks
 {
@@ -98,31 +99,35 @@ public class Loader : MonoBehaviourPunCallbacks
     }
 
     // 서버에 저장한 QuestionCanvas에 대한 답 불러오기.
-    public void LoadAnswers(int actorNumber, Action<int[]> onAnswersLoaded)
+    public async Task<int> ResponseIndexToQuestion(int actorNumber, int index)
     {
         string roomCode = GameManager.Instance.GetRoomCode();
         // Firebase 경로에서 ActorNumber로 데이터를 가져옴
-        databaseReference.Child(roomCode).Child("user_answers").Child(actorNumber.ToString()).GetValueAsync().ContinueWith(task =>
+        try
         {
-            if (task.IsCompleted && task.Result.Exists)
+            var dataSnapshot = await databaseReference
+                .Child(roomCode)
+                .Child("user_answers")
+                .Child(actorNumber.ToString())
+                .Child($"question_{index}")
+                .GetValueAsync();
+
+            if (dataSnapshot.Exists && dataSnapshot.Value != null)
             {
-                DataSnapshot snapshot = task.Result;
-                List<int> answersList = new List<int>();
+                // 데이터가 존재하면 문자열로 반환
+                return int.Parse(dataSnapshot.Value.ToString());
 
-                foreach (var child in snapshot.Children)
-                {
-                    int answer = int.Parse(child.Value.ToString());
-                    answersList.Add(answer);
-                }
-
-                // 불러온 answers 배열을 콜백으로 전달
-                onAnswersLoaded(answersList.ToArray());
             }
             else
             {
-                Debug.LogError("Error loading answers: " + task.Exception);
+                return -1;
             }
-        });
+        }
+        catch(Exception ex)
+        {
+            Debug.LogError(ex.Message);
+            return -1;
+        }
     }
 
     /*public void LoadFirstImpressionScore(string scoreType, int targetActorNumber, Action<int> onFirstImpressionScoreLoaded)
@@ -152,7 +157,67 @@ public class Loader : MonoBehaviourPunCallbacks
         });
     }*/
 
+    public async Task<string> QuestionInDictonary(int questionIndex)
+    {
+        string roomCode = GameManager.Instance.GetRoomCode();
+        // Firebase 경로에서 ActorNumber로 데이터를 가져옴
+        try
+        {
+            var dataSnapshot = await databaseReference
+                .Child(roomCode)
+                .Child("QuestionDictionary")
+                .Child(questionIndex.ToString())
+                .Child("Question")
+                .GetValueAsync();
 
+            if (dataSnapshot.Exists && dataSnapshot.Value != null)
+            {
+                // 데이터가 존재하면 문자열로 반환
+                return dataSnapshot.Value.ToString();
+
+            }
+            else
+            {
+                return "Null";
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError(ex.Message);
+            return "Error";
+        }
+    }
+
+    public async Task<string> ResponseInDictonary(int questionIndex, int responseIndex)
+    {
+        string roomCode = GameManager.Instance.GetRoomCode();
+        // Firebase 경로에서 ActorNumber로 데이터를 가져옴
+        try
+        {
+            var dataSnapshot = await databaseReference
+                .Child(roomCode)
+                .Child("QuestionDictionary")
+                .Child(questionIndex.ToString())
+                .Child(responseIndex.ToString())
+                .GetValueAsync();
+
+            if (dataSnapshot.Exists && dataSnapshot.Value != null)
+            {
+                // 데이터가 존재하면 문자열로 반환
+                return dataSnapshot.Value.ToString();
+
+            }
+            else
+            {
+                return "Null";
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError(ex.Message);
+            return "Error";
+        }
+    }
 
     // About Message (In AlwaysOnCanvas)
     public void LoadAllMessages(DatabaseReference messageRef, Action onMessagesLoaded)
@@ -668,5 +733,40 @@ public class Loader : MonoBehaviourPunCallbacks
             }
         });
     }
+
+    // About Reward.
+    public async Task<string> SignReceivedPartnerInfo(int actorNumber)    // 가져온 플레이어의 정보 인덱스가 1로 채워진 2진수 기록정보를 가져옴
+    {
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        try
+        {
+            // Firebase에서 데이터를 비동기적으로 가져옴
+            var dataSnapshot = await databaseReference
+                .Child(roomCode)
+                .Child(actorNumber.ToString())
+                .Child("SignReceivedPartnerInfo")
+                .GetValueAsync();
+
+            if (dataSnapshot.Exists && dataSnapshot.Value != null)
+            {
+                // 데이터가 존재하면 문자열로 반환
+                return dataSnapshot.Value.ToString();
+            }
+            else
+            {
+                // 데이터가 없으면 "000000"을 반환
+                int length = canvasManager.QuestionCanvas.GetComponent<QuestionCanvas>().questions.Length;
+                return new string('0', length);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Error fetching data: {ex.Message}");
+            // 예외 발생 시 "000000"을 반환하거나, 더 적절한 에러 코드를 반환할 수 있음
+            return $"{ex}";
+        }
+    }
+
 }
 

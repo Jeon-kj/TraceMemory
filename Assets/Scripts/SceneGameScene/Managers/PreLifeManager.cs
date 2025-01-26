@@ -11,12 +11,23 @@ public class PreLifeManager : MonoBehaviourPunCallbacks
     private bool preLifesAssigned = false;
     List<string> males = new List<string> { "¸ù·æ", "°ß¿ì", "¿Â´Þ" };
     List<string> females = new List<string> { "ÃáÇâ", "Á÷³à", "Æò°­" };
+    Dictionary<string, string> coupleDic = new Dictionary<string, string> 
+    {   
+        {"¸ù·æ", "ÃáÇâ"},
+        {"°ß¿ì", "Á÷³à"},
+        {"¿Â´Þ", "Æò°­"},
+        {"ÃáÇâ", "¸ù·æ"},
+        {"Á÷³à", "°ß¿ì"},
+        {"Æò°­", "¿Â´Þ"}
+    };
 
     SceneController sceneController;
+    Uploader uploader;
 
     private void Awake()
     {
         sceneController = FindObjectOfType<SceneController>();
+        uploader = FindObjectOfType<Uploader>();
     }
 
     public void OnSetSceneIdentity()
@@ -31,11 +42,15 @@ public class PreLifeManager : MonoBehaviourPunCallbacks
     {
         Shuffle(males);
         Shuffle(females);
+        Dictionary<string, Player> roleDic = new Dictionary<string, Player>();
 
-        foreach(Player player in PhotonNetwork.PlayerList)
+        foreach (Player player in PhotonNetwork.PlayerList)
         {
             List<string> list = player.GetPlayerGender() == "Male" ? males : females;
             string preLifeName = list[0];
+
+            roleDic.Add(preLifeName, player);
+
             list.RemoveAt(0);
             try
             {
@@ -45,9 +60,19 @@ public class PreLifeManager : MonoBehaviourPunCallbacks
             catch(Exception e)
             {
                 Debug.Log("Error Detect : " + e);
-            }
-            
+            }            
         }
+
+        if (PhotonNetwork.IsMasterClient)
+        {
+            foreach (var role in roleDic.Keys)
+            {
+                Player player = roleDic[role];
+                string partnerRole = coupleDic[role];
+                Player partner = roleDic[partnerRole];
+                uploader.PartnerActorNumber(player.ActorNumber, partner.ActorNumber);
+            }
+        }        
 
         preLifesAssigned = true;  // ¿ªÇÒ ¹èÁ¤ ¿Ï·á ÇÃ·¡±× ¼³Á¤
     }

@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,6 +15,7 @@ public class AuxiliaryCanvas : MonoBehaviour
     public GameObject timer;
 
     private bool timerSign = false;
+    private System.Random random = new System.Random();  // Random 객체 생성
 
     Uploader uploader;
     Loader loader;
@@ -168,4 +170,66 @@ public class AuxiliaryCanvas : MonoBehaviour
     }
 
     public void SetTimerSign(bool sign) { timerSign = sign; }
+
+    // About Reward
+    public void DistributeMiniGameReward(int actorNumber)
+    {
+        foreach(var player in PhotonNetwork.PlayerList)
+        {
+            if(player.ActorNumber == actorNumber)
+            {
+                ReceiveMiniGameReward();
+                break;
+            }
+        }
+    }
+
+    [PunRPC]
+    async void ReceiveMiniGameReward()
+    {
+        int AN = PhotonNetwork.LocalPlayer.ActorNumber;
+        // 1. 무작위의 번호를 추첨하여 초기에 조사했던 질문을 뽑아옴.
+        List<int> infoIndexList = new List<int>();
+        string SignReceivedPartnerInfo;
+        try
+        {
+            SignReceivedPartnerInfo = await loader.SignReceivedPartnerInfo(AN);
+            for (int i = 0; i < SignReceivedPartnerInfo.Length; i++)
+            {
+                if (SignReceivedPartnerInfo[i] == '0')  // 1은 이미 얻은 정보라는 뜻. 0은 아직 얻지 않은 정보이기 때문에
+                {
+                    infoIndexList.Add(i);   // 랜덤으로 추출할 정보로써 리스트에 추가됨.
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e);
+        }
+
+        int index = -1; // 초기값을 -1로 설정
+        if (infoIndexList.Count > 0)  // 리스트가 비어있지 않다면
+        {
+            index = random.Next(infoIndexList.Count); // 랜덤 인덱스 선택
+        }
+
+        int questionIndex = infoIndexList[index];
+
+        // 2. 해당 질문에 대한 파트너의 대답을 받아옴.
+        int responseIndex;
+        try
+        {
+            responseIndex = await loader.ResponseIndexToQuestion(AN, index);
+        }
+        catch(Exception e)
+        {
+            Debug.LogException(e);
+        }
+        // 여기까지 하면 몇번 질문에 몇번 선택지를 찍었다! 까지는 알았음. 그럼 몇번 질문이 뭐고, 몇번 선택지는 뭐다! 를 알아야 함.
+        //loader.QuestionInDictonary();
+        //loader.ResponseInDictonary(); 이거 구현.
+        // 3. 이를 텍스트 형식으로 RewardEffect에 표시.
+        // 4. 받은 질문의 index를 기록해두어 중복 보상 방지.
+        // 5. 그러기 위해서는 초기 역할 분배 때, 자신의 짝의 actorNumber를 알아둬야 함.
+    }
 }

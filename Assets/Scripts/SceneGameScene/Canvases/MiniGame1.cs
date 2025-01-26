@@ -172,6 +172,7 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
             try
             {
                 targetName = canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>().GetPlayerName(predictor);
+                //canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>().DistributeMiniGameReward(predictor);
             }
             catch (Exception e)
             {

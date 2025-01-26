@@ -133,6 +133,8 @@ public class ButtonManager : MonoBehaviour
             else if (txt == "4인") GameManager.Instance.SetPlayerMaxNumber(4);
             else if (txt == "6인") GameManager.Instance.SetPlayerMaxNumber(6);
 
+            // GameManager.Instance.SetPlayerMaxNumber(1); test용
+
             PanelMaxSelect.SetActive(false);
             networkManager.Connect("방만들기");
             PanelLoading.SetActive(true);
@@ -268,21 +270,18 @@ public class ButtonManager : MonoBehaviour
         {
             questionCanvas.CheckAnswer(AskQuestion1);
             if (!questionCanvas.GetNextSign()) return;
-            AskQuestion1.SetActive(false);
             AskQuestion2.SetActive(true);
         }
         else if(targetPanel == AskQuestion2)
         {
             questionCanvas.CheckAnswer(AskQuestion2);
             if (!questionCanvas.GetNextSign()) return;
-            AskQuestion2.SetActive(false);
             AskQuestion3.SetActive(true);
         }
         else if(targetPanel == AskQuestion3)
         {
             questionCanvas.CheckAnswer(AskQuestion3);
             if (!questionCanvas.GetNextSign()) return;
-            AskQuestion3.SetActive(false);
             AskQuestion4.SetActive(true);
         }
         else if(targetPanel == AskQuestion4)

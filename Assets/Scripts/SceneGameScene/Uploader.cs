@@ -89,11 +89,11 @@ public class Uploader : MonoBehaviourPunCallbacks
     }
 
     // QuestionCanvas에서 플레이어의 답변 서버에 저장.
-    public void UploadAnswers(int[] answers, int mockActorNumber = -1, string mockRoomCode = null)
+    public void UploadAnswers(int[] answers)
     {
         // 모의 데이터를 사용할 경우, 실제 네트워크 데이터 대신 사용
-        int actorNumber = mockActorNumber == -1 ? PhotonNetwork.LocalPlayer.ActorNumber : mockActorNumber;
-        string roomCode = string.IsNullOrEmpty(mockRoomCode) ? GameManager.Instance.GetRoomCode() : mockRoomCode;
+        int actorNumber = PhotonNetwork.LocalPlayer.ActorNumber;
+        string roomCode = GameManager.Instance.GetRoomCode();
 
         // Dictionary로 변환하여 데이터 업로드
         Dictionary<string, object> answerData = new Dictionary<string, object>();
@@ -151,6 +151,52 @@ public class Uploader : MonoBehaviourPunCallbacks
                 Debug.LogError($"Failed to update {scoreType} in Firebase: " + task.Exception);
             }
         });
+    }
+
+    public void QuestionInDictonary(int questionIndex, string question)
+    {
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        // Firebase 경로에서 scoreType에 따라 점수 업데이트
+        databaseReference
+            .Child(roomCode)
+            .Child("QuestionDictionary")
+            .Child(questionIndex.ToString())
+            .Child("Question")
+            .SetValueAsync(question).ContinueWith(task =>
+            {
+                if (task.IsCompleted)
+                {
+                    Debug.Log($"Question updated successfully in Firebase QuestionDictonary.");
+                }
+                else
+                {
+                    Debug.LogError($"Failed to update Question in Firebase QuestionDictonary: " + task.Exception);
+                }
+            });
+    }
+
+    public void ResponseInDictonary(int questionIndex, int responseIndex, string response)
+    {
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        // Firebase 경로에서 scoreType에 따라 점수 업데이트
+        databaseReference
+            .Child(roomCode)
+            .Child("QuestionDictionary")
+            .Child(questionIndex.ToString())
+            .Child(responseIndex.ToString())
+            .SetValueAsync(response).ContinueWith(task =>
+            {
+                if (task.IsCompleted)
+                {
+                    Debug.Log($"[Response] updated successfully in Firebase QuestionDictonary.");
+                }
+                else
+                {
+                    Debug.LogError($"Failed to update [Response] in Firebase QuestionDictonary: " + task.Exception);
+                }
+            });
     }
 
     //All Player Ready?
@@ -429,5 +475,42 @@ public class Uploader : MonoBehaviourPunCallbacks
         }
         */
         loader.GetStartTime();
+    }
+
+    // About Reward.
+    public void PartnerActorNumber(int actorNumber, int partnerActorNumber) // 플레이어들의 파트너 정보 저장.
+    {
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        // Firebase 경로에서 scoreType에 따라 점수 업데이트
+        databaseReference
+            .Child(roomCode)
+            .Child(actorNumber.ToString())
+            .Child("Partner")
+            .SetValueAsync(partnerActorNumber).ContinueWith(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    Debug.LogError($"Failed to set value in Firebase: {task.Exception}");
+                }
+            });
+    }
+
+    public void SignReceivedPartnerInfo(int actorNumber, int partnerActorNumber)
+    {
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        // Firebase 경로에서 scoreType에 따라 점수 업데이트
+        databaseReference
+            .Child(roomCode)
+            .Child(actorNumber.ToString())
+            .Child("SignReceivedPartnerInfo")
+            .SetValueAsync(partnerActorNumber).ContinueWith(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    Debug.LogError($"Failed to set value in Firebase: {task.Exception}");
+                }
+            });
     }
 }
