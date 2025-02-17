@@ -735,6 +735,36 @@ public class Loader : MonoBehaviourPunCallbacks
     }
 
     // About Reward.
+    public async Task<int> PartnerActorNumber(int actorNumber)
+    {
+        string roomCode = GameManager.Instance.GetRoomCode();
+
+        try
+        {
+            // Firebase에서 데이터를 비동기적으로 가져옴
+            var dataSnapshot = await databaseReference
+                .Child(roomCode)
+                .Child(actorNumber.ToString())
+                .Child("Partner")
+                .GetValueAsync();
+            if (dataSnapshot.Exists && dataSnapshot.Value != null)
+            {
+                // 데이터가 존재하면 문자열로 반환
+                return int.Parse(dataSnapshot.Value.ToString());
+            }
+            else
+            {
+                // 데이터가 없으면 -1을 반환
+                return -1;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Error fetching data: {ex.Message}");
+            return -1;
+        }
+    }
+
     public async Task<string> SignReceivedPartnerInfo(int actorNumber)    // 가져온 플레이어의 정보 인덱스가 1로 채워진 2진수 기록정보를 가져옴
     {
         string roomCode = GameManager.Instance.GetRoomCode();

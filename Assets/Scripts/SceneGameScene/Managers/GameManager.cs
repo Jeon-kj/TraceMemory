@@ -31,7 +31,7 @@ public class GameManager : MonoBehaviour
         }
 
         preLifeManager = FindObjectOfType<PreLifeManager>();
-        buttonManager = FindObjectOfType<ButtonManager>();
+        buttonManager = GameObject.FindWithTag("MainButtonManager").GetComponent<ButtonManager>();
         playerReady = FindObjectOfType<PlayerReady>();
     }
 

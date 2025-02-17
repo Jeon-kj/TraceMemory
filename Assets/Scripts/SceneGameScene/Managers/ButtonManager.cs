@@ -69,6 +69,10 @@ public class ButtonManager : MonoBehaviour
     public GameObject AboutSecretMessage;
     public GameObject AboutLoveCard;
 
+    //In DebugText
+    [Header("DebugText Section")]
+    public GameObject AboutDebugText;
+
 
     private PlayerProperties playerProperties;
     private LoadGallery loadGallery;
@@ -467,8 +471,8 @@ public class ButtonManager : MonoBehaviour
     public void OnAuxiliaryCanvas()
     {
         GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
-        // 이거 어떻게 못하나??
         GameObject targetPanel = FindParentWithTag(clickedButton, "Panel");
+        Text buttonText = clickedButton.GetComponentInChildren<Text>();
 
         if (targetPanel == null)
         {
@@ -523,6 +527,23 @@ public class ButtonManager : MonoBehaviour
             string type = canvasManager.GetCurrCanvas() + "Timer";
             uploader.UploadReadyCount(type);
         }
+
+        else if(targetPanel == RewardEffect)
+        {
+            if (buttonText.text == "확인")
+            {
+                auxiliaryCanvas.SetActiveDisplay("rewardEffect", false);
+                auxiliaryCanvas.InitRewardDisplay();
+                if (GameManager.Instance.GetSignMG2()) // MiniGame1이 끝났다는 신호가 true이면,
+                {
+                    canvasManager.TurnOffAndOn(canvasManager.MiniGame2, canvasManager.SelectPlayerCanvas);
+                }
+                else if (GameManager.Instance.GetSignMG1())
+                {
+                    canvasManager.TurnOffAndOn(canvasManager.MiniGame1, canvasManager.SelectPlayerCanvas);
+                }
+            }
+        }
     }
 
     public void OnMiniGame1Canvas()
@@ -546,7 +567,8 @@ public class ButtonManager : MonoBehaviour
                 //이 이전에 보상 추가하기.
                 //canvasManager.TurnOffAndOn(canvasManager.MiniGame1, canvasManager.MiniGame2);
                 GameManager.Instance.SetSignMG1(true);
-                canvasManager.TurnOffAndOn(canvasManager.MiniGame1, canvasManager.SelectPlayerCanvas);
+                auxiliaryCanvas.SetActiveDisplay("rewardEffect", true);
+                ResultDisplay1.SetActive(false);
             }
         }
     }
@@ -577,7 +599,8 @@ public class ButtonManager : MonoBehaviour
             {
                 //이 이전에 보상 추가하기.
                 GameManager.Instance.SetSignMG2(true);
-                canvasManager.TurnOffAndOn(canvasManager.MiniGame2, canvasManager.SelectPlayerCanvas);
+                auxiliaryCanvas.SetActiveDisplay("rewardEffect", true);
+                ResultDisplay2.SetActive(false);
             }
         }
     }
@@ -598,4 +621,18 @@ public class ButtonManager : MonoBehaviour
         return null; // 조건에 맞는 부모가 없을 경우
     }
 
+
+    public void OnDebugCanvas()
+    {
+        GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
+        GameObject targetPanel = clickedButton.transform.parent.gameObject;
+
+        Text targetText = targetPanel.transform.Find("DebugBtn/Text").gameObject.GetComponent<Text>();
+        GameObject debugBox = targetPanel.transform.Find("DebugBox").gameObject;
+
+        if(targetText != null && targetText.text == "D")
+        {
+            ToggleDisplay(debugBox, null);
+        }
+    }
 }

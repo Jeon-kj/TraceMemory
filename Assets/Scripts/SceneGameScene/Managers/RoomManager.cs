@@ -32,7 +32,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     private void Awake()
     {
         playerProperties = FindObjectOfType<PlayerProperties>();
-        buttonManager = FindObjectOfType<ButtonManager>();
+        buttonManager = GameObject.FindWithTag("MainButtonManager").GetComponent<ButtonManager>(); // 모든 오브젝트가 할당되어 있는 ButtonManager를 확정적으로 탐색하기 위해서.
         uploader = FindObjectOfType<Uploader>();
         loader = FindObjectOfType<Loader>();
         roomDisplay = FindObjectOfType<RoomDisplay>();

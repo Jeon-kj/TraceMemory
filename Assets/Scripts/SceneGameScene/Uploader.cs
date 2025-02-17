@@ -105,7 +105,11 @@ public class Uploader : MonoBehaviourPunCallbacks
 
         Debug.Log("UploadAnswers : " + roomCode + " " + actorNumber);
         // Firebase Realtime Database에 ActorNumber를 키로 사용하여 데이터 저장
-        databaseReference.Child(roomCode).Child("user_answers").Child(actorNumber.ToString()).SetValueAsync(answerData).ContinueWith(task =>
+        databaseReference
+            .Child(roomCode)
+            .Child("user_answers")
+            .Child(actorNumber.ToString())
+            .SetValueAsync(answerData).ContinueWith(task =>
         {
             if (task.IsCompleted)
             {
@@ -347,7 +351,7 @@ public class Uploader : MonoBehaviourPunCallbacks
                 }
                 currentCount++;
                 mutableData.Value = currentCount;
-
+                DebugCanvas.Instance.DebugLog($"---------------UploadVotedCount currentCount: {currentCount}");
                 return TransactionResult.Success(mutableData);
             }).ContinueWith(task =>
             {
@@ -496,7 +500,7 @@ public class Uploader : MonoBehaviourPunCallbacks
             });
     }
 
-    public void SignReceivedPartnerInfo(int actorNumber, int partnerActorNumber)
+    public void SignReceivedPartnerInfo(int actorNumber, string newSignReceivedPartnerInfo)
     {
         string roomCode = GameManager.Instance.GetRoomCode();
 
@@ -505,7 +509,7 @@ public class Uploader : MonoBehaviourPunCallbacks
             .Child(roomCode)
             .Child(actorNumber.ToString())
             .Child("SignReceivedPartnerInfo")
-            .SetValueAsync(partnerActorNumber).ContinueWith(task =>
+            .SetValueAsync(newSignReceivedPartnerInfo).ContinueWith(task =>
             {
                 if (task.IsFaulted)
                 {

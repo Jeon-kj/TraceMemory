@@ -1,3 +1,4 @@
+using Photon.Pun;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -48,12 +49,15 @@ public class QuestionCanvas : MonoBehaviour
             }
 
             // questionDictionary 구성. -> 0번 질문에 2번이라고 대답 이런식으로 기록하는데, 0번 질문이 뭐고 2번 질문이 무엇인지 알기 위해.
-            uploader.QuestionInDictonary(i, questions[i].transform.Find("Question").GetComponent<Text>().text);
-
-            for(int j=0;j < toggles.Length; j++)
+            if(PhotonNetwork.IsMasterClient)
             {
-                uploader.ResponseInDictonary(i, j, toggles[j].transform.Find("Label").GetComponent<Text>().text);
-            }
+                uploader.QuestionInDictonary(i, questions[i].transform.Find("Question").GetComponent<Text>().text);
+
+                for (int j = 0; j < toggles.Length; j++)
+                {
+                    uploader.ResponseInDictonary(i, j, toggles[j].transform.Find("Label").GetComponent<Text>().text);
+                }
+            }            
         }
 
         uploader.UploadAnswers(answers);

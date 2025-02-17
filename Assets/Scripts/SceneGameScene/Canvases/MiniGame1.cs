@@ -106,16 +106,8 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
     {
         // 투표를 완료한 상태임을 서버에 알려야 함. O
         // 서버는 그 수를 세서 총 인원이 맞으면 투표를 종료 O
-        // 시간이 다 되면 투표를 종료. 
-        WaitAnoterPlayer();
+        // 시간이 다 되면 투표를 종료.
         uploader.UploadVotedCount("MiniGame1");
-    }
-
-    public void WaitAnoterPlayer()
-    {
-        baseDisplay.SetActive(true);
-        baseDisplay.transform.Find("Button").gameObject.SetActive(false);
-        baseDisplay.transform.Find("Question").GetComponent<Text>().text = "선택 완료했습니다!";
     }
 
     public void OnAllPlayersVoted()
@@ -128,7 +120,6 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
     public async void ProcessTopScorers()
     {
         var (topScorers, highestScore) = await loader.FindTopScorers("MiniGame1");
-        var topScorerPredictors = await loader.FindTopScorerPredictors("MiniGame1", topScorers);
 
         Debug.Log($"Highest Score: {highestScore}");
         Transform topScorer = resultDisplay.transform.Find("Result");
@@ -160,19 +151,31 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
         var topScorerPredictors = await loader.FindTopScorerPredictors("MiniGame1", topScorers);
 
         Transform topScorer = resultDisplay.transform.Find("Result");
-        Debug.Log($"topScorerPredictors Transform: {topScorerPredictors}");
+        DebugCanvas.Instance.DebugLog($"topScorerPredictors Transform: {topScorerPredictors}");
 
         topScorer.GetComponent<Text>().text += $"예측에 성공한 플레이어는\n";
         if (topScorerPredictors.Count == 0) topScorer.GetComponent<Text>().text += "아무도 없습니다.";
 
+        foreach (int scorer in topScorers)
+        {
+            DebugCanvas.Instance.DebugLog($"---------------Top Scorer: ActorNumber {scorer}");
+        }
         foreach (int predictor in topScorerPredictors)
         {
-            Debug.Log($"Top Predictor: ActorNumber {predictor}");
+            DebugCanvas.Instance.DebugLog($"---------------Top Predictor: ActorNumber {predictor}");
+        }
+        foreach (int predictor in topScorerPredictors)
+        {
+            DebugCanvas.Instance.DebugLog($"Top Predictor: ActorNumber {predictor}");
             string targetName = "";
             try
             {
                 targetName = canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>().GetPlayerName(predictor);
-                //canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>().DistributeMiniGameReward(predictor);
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>().DistributeMiniGameReward(predictor);
+                    DebugCanvas.Instance.DebugLog($"player is MasterClient! execute DistributeMiniGameReward, target::{predictor}");
+                }                    
             }
             catch (Exception e)
             {

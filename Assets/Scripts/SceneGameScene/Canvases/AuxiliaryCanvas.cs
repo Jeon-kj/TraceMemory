@@ -8,11 +8,12 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class AuxiliaryCanvas : MonoBehaviour
+public class AuxiliaryCanvas : MonoBehaviourPunCallbacks
 {
     public GameObject roomDisplay;
     public GameObject selectDisplay;
     public GameObject timer;
+    public GameObject rewardEffect;
 
     private bool timerSign = false;
     private System.Random random = new System.Random();  // Random 객체 생성
@@ -40,7 +41,6 @@ public class AuxiliaryCanvas : MonoBehaviour
         // 모든 자식 Transform을 한 번에 가져옴 (비활성화 포함)
         Transform[] roomDisplayChildren = roomDisplay.GetComponentsInChildren<Transform>(true);
         Transform[] selectDisplayChildren = selectDisplay.GetComponentsInChildren<Transform>(true);
-
         for (int i = 0; i < maxPlayers / 2; i++)
         {
             for (int j = 0; j < 2; j++)
@@ -60,6 +60,7 @@ public class AuxiliaryCanvas : MonoBehaviour
                 // PlayerName 복사
                 Text targetNameText = targetTransform.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "PlayerName").GetComponent<Text>();
                 Text sourceNameText = sourceTransform.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "PlayerName").GetComponent<Text>();
+                                
                 if (targetNameText != null && sourceNameText != null)
                     targetNameText.text = sourceNameText.text;
 
@@ -178,7 +179,7 @@ public class AuxiliaryCanvas : MonoBehaviour
         {
             if(player.ActorNumber == actorNumber)
             {
-                ReceiveMiniGameReward();
+                photonView.RPC("ReceiveMiniGameReward", player);
                 break;
             }
         }
@@ -187,10 +188,13 @@ public class AuxiliaryCanvas : MonoBehaviour
     [PunRPC]
     async void ReceiveMiniGameReward()
     {
+        DebugCanvas.Instance.DebugLog($"Received RPC Call Sign, Execute ReceiveMiniGameReward!");
         int AN = PhotonNetwork.LocalPlayer.ActorNumber;
+        int PAN = await loader.PartnerActorNumber(AN);  // PartnerAN
+
         // 1. 무작위의 번호를 추첨하여 초기에 조사했던 질문을 뽑아옴.
         List<int> infoIndexList = new List<int>();
-        string SignReceivedPartnerInfo;
+        string SignReceivedPartnerInfo = "";
         try
         {
             SignReceivedPartnerInfo = await loader.SignReceivedPartnerInfo(AN);
@@ -211,25 +215,42 @@ public class AuxiliaryCanvas : MonoBehaviour
         if (infoIndexList.Count > 0)  // 리스트가 비어있지 않다면
         {
             index = random.Next(infoIndexList.Count); // 랜덤 인덱스 선택
+            // 이제 해당 질문을 얻은적 있음 처리를 해야함.
         }
 
         int questionIndex = infoIndexList[index];
 
         // 2. 해당 질문에 대한 파트너의 대답을 받아옴.
         int responseIndex;
-        try
-        {
-            responseIndex = await loader.ResponseIndexToQuestion(AN, index);
-        }
-        catch(Exception e)
-        {
-            Debug.LogException(e);
-        }
-        // 여기까지 하면 몇번 질문에 몇번 선택지를 찍었다! 까지는 알았음. 그럼 몇번 질문이 뭐고, 몇번 선택지는 뭐다! 를 알아야 함.
-        //loader.QuestionInDictonary();
-        //loader.ResponseInDictonary(); 이거 구현.
+        responseIndex = await loader.ResponseIndexToQuestion(PAN, index);   // index번째 question에 대한 Partner의 응답 index를 가져옴.
+
+        string question = await loader.QuestionInDictonary(questionIndex);
+        string response = await loader.ResponseInDictonary(questionIndex, responseIndex);
+
         // 3. 이를 텍스트 형식으로 RewardEffect에 표시.
+        Text rewardText = rewardEffect.transform.Find("Text").GetComponent<Text>();
+        rewardText.text = $"\"{question}\"라는 질문에 대해 당신의 짝은 \"{response}\"라고 응답했습니다.";
+
         // 4. 받은 질문의 index를 기록해두어 중복 보상 방지.
-        // 5. 그러기 위해서는 초기 역할 분배 때, 자신의 짝의 actorNumber를 알아둬야 함.
+        if(SignReceivedPartnerInfo != "")
+        {
+            string newSignReceivedPartnerInfo = new string('0', SignReceivedPartnerInfo.Length);
+            uploader.SignReceivedPartnerInfo(AN, newSignReceivedPartnerInfo);
+        }
+    }
+
+    public void InitRewardDisplay()
+    {
+        Text rewardText = rewardEffect.transform.Find("Text").GetComponent<Text>();
+        rewardText.text = "보상을 얻지 못했습니다.";
+    }
+
+    public void SetActiveDisplay(string target, bool sign)
+    {
+        if(target == "roomDisplay") roomDisplay.SetActive(sign);
+        else if(target == "selectDisplay") selectDisplay.SetActive(sign);
+        else if(target == "timer") timer.SetActive(sign);
+        else if(target == "rewardEffect") rewardEffect.SetActive(sign);
+        else throw new ArgumentException("Invalid target specified: " + target);
     }
 }

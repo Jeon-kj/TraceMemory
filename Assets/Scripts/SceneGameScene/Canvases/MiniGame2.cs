@@ -151,7 +151,11 @@ public class MiniGame2 : MonoBehaviourPunCallbacks
             try
             {
                 targetName = canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>().GetPlayerName(player);
-                //canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>().DistributeMiniGameReward(player);
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>().DistributeMiniGameReward(player);
+                    DebugCanvas.Instance.DebugLog($"player is MasterClient! execute DistributeMiniGameReward, target::{player}");
+                }                
             }
             catch (Exception e)
             {
