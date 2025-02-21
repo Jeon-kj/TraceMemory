@@ -1,5 +1,6 @@
 using Firebase.Database;
 using Photon.Pun;
+using System;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -7,10 +8,18 @@ using UnityEngine.UI;
 
 public class AlwaysOnCanvas : MonoBehaviour
 {
+    [Header("Family Section")]
+    public GameObject messageBtn;
+    public GameObject loveCardBtn;
+    public GameObject messageDisplay;
+    public GameObject loveCardDisplay;
+    [Space(10)]
+
+    [Header("Other Section")]
     public GameObject messagePrefab; // 메시지 프리팹
+    public GameObject roomDisplay;
     public Transform contentTransform; // 메시지를 추가할 Content 영역
-    public Transform loveCardDisplay;
-    public Transform roomDisplay;
+    [Space(10)]
 
     private DatabaseReference databaseReference;
 
@@ -175,6 +184,66 @@ public class AlwaysOnCanvas : MonoBehaviour
                 if (targetNameText != null && targetNameText.text == "Empty")
                     targetTransform.gameObject.SetActive(false);
             }
+        }
+    }
+
+    public void SetActiveDisplay(string target, bool sign)
+    {
+        switch (target)
+        {
+            case "messageBtn":
+                messageBtn.SetActive(sign);
+                break;
+            case "loveCardBtn":
+                loveCardBtn.SetActive(sign);
+                break;
+            case "messageDisplay":
+                messageDisplay.SetActive(sign);
+                break;
+            case "loveCardDisplay":
+                loveCardDisplay.SetActive(sign);
+                break;
+            default:
+                throw new ArgumentException("Invalid target specified: " + target);
+        }
+    }
+
+    public GameObject GetPanel(string target)
+    {
+        GameObject gameObject = null;
+        switch (target)
+        {
+            case "messageBtn":
+                gameObject = messageBtn;
+                break;
+            case "loveCardBtn":
+                gameObject = loveCardBtn;
+                break;
+            case "messageDisplay":
+                gameObject = messageDisplay;
+                break;
+            case "loveCardDisplay":
+                gameObject = loveCardDisplay;
+                break;
+            default:
+                throw new ArgumentException("Invalid target specified: " + target);
+        }
+
+        return gameObject;
+    }
+
+    public void ToggleDisplay(GameObject displayToToggle, GameObject otherDisplay)
+    {
+        // 현재 패널 활성화/비활성화
+        if (displayToToggle != null)
+        {
+            displayToToggle.SetActive(!displayToToggle.activeSelf);
+        }
+
+        // 다른 패널이 활성화되어 있으면 비활성화
+        if (otherDisplay != null && otherDisplay.activeSelf)
+        {
+            otherDisplay.SetActive(false);
         }
     }
 }

@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviour
     PreLifeManager preLifeManager;
     ButtonManager buttonManager;
     PlayerReady playerReady;
+    PreGameCanvas preGameCanvas;
 
     private void Awake()
     {
@@ -33,6 +34,7 @@ public class GameManager : MonoBehaviour
         preLifeManager = FindObjectOfType<PreLifeManager>();
         buttonManager = GameObject.FindWithTag("MainButtonManager").GetComponent<ButtonManager>();
         playerReady = FindObjectOfType<PlayerReady>();
+        preGameCanvas = FindObjectOfType<PreGameCanvas>();
     }
 
     public void CheckIfAllPlayersReady()
@@ -49,7 +51,7 @@ public class GameManager : MonoBehaviour
 
     public void SetSceneIdentity()
     {
-        buttonManager.ReadyToStartGame();
+        preGameCanvas.ReadyToStartGame();
         StartCoroutine(WaitAndExecute());
     }
     IEnumerator WaitAndExecute()

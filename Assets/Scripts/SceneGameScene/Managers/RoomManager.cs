@@ -22,6 +22,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     private RoomDisplay roomDisplay;
     private PlayerReady playerReady;
     private NetworkManager networkManager;
+    private PreGameCanvas preGameCanvas;
 
     public List<int> prePlayerOrder;
 
@@ -38,6 +39,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         roomDisplay = FindObjectOfType<RoomDisplay>();
         playerReady = FindObjectOfType<PlayerReady>();
         networkManager = FindObjectOfType<NetworkManager>();
+        preGameCanvas = FindObjectOfType<PreGameCanvas>();
     }
     
     // 방만들기
@@ -108,7 +110,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     // 방 입장하기 실패 시 호출됨.
     public override void OnCreateRoomFailed(short returnCode, string message)
     {
-        buttonManager.OnRoomFailed();
+        preGameCanvas.OnRoomFailed();
     }
 
     // 방 입장하기
@@ -140,7 +142,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         SavePlayerInfo(playerName, playerGender, playerImageFileName);
 
         roomDisplay.RoomCodeUpdate(roomCode);
-        buttonManager.OnRoomJoined();
+        preGameCanvas.OnRoomJoined();
     }
 
     async Task SendImageToStorage()
@@ -178,7 +180,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     // 방 입장하기 실패 시 호출됨.
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
-        buttonManager.OnRoomFailed();
+        preGameCanvas.OnRoomFailed();
         // 방 입장 실패 처리
     }
 
@@ -258,7 +260,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     public override void OnLeftRoom()
     {
-        buttonManager.SetInit();        
+        preGameCanvas.SetInit();        
         roomDisplay.OnLeftRoom();
     }
 

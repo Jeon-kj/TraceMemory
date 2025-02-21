@@ -9,127 +9,76 @@ using Photon.Pun;
 
 public class ButtonManager : MonoBehaviour
 {
-    //In PreGameCanvas
-    [Header("PreGameCanvas Section")]
-    public GameObject PanelNameInput;   // NameInput
-    public GameObject PanelImageInput;  // ImageInput
-    public GameObject PanelGenderSelect;   // GenderSelect
-    public GameObject PanelRoomEntry;  // RoomEntry
-    public GameObject PanelMaxSelect;   // MaxSelect
-    public GameObject PanelRoomSelect;   // RoomSelect
-    public GameObject PanelLoading;   // Loading
-    public GameObject PanelRoomDisplay; // RoomDisplay
-    public GameObject PanelReadyToStart; // ReadyToStart
-    [Space(10)]
-
-    //In QuestionCanvas
-    [Header("QuestionCanvas Section")]
-    public GameObject AskQuestion1;
-    public GameObject AskQuestion2;
-    public GameObject AskQuestion3;
-    public GameObject AskQuestion4;
-    [Space(10)]
-
-    //In SelectPlayerCanvas
-    [Header("SelectPlayerCanvas Section")]
-    public GameObject FirstImpressionDisplay;
-    public GameObject LoveCardDisplay;
-    public GameObject SecretMessageDisplay;
-    [Space(10)]
-
-    //In AuxiliaryCanvas
-    [Header("AuxiliaryCanvas Section")]
-    public GameObject MiniGameSelectDisplay;
-    public GameObject IntroduceMyself;
-    public GameObject Timer;
-    public GameObject RewardEffect;
-    [Space(10)]
-
-    //In MiniGame1
-    [Header("MiniGame1 Section")]
-    public GameObject BaseDisplay1;
-    public GameObject WaitDisplay1;
-    public GameObject ResultDisplay1;
-    [Space(10)]
-
-    //In MiniGame2
-    [Header("MiniGame2 Section")]
-    public GameObject BaseDisplay2;
-    public GameObject WaitDisplay2;
-    public GameObject ResultDisplay2;
-    [Space(10)]
-
-    //In MiniGame3
-    [Header("MiniGame3 Section")]
-    public GameObject BaseDisplay3;
-    public GameObject ResultDisplay3;
-
-    //In AlwaysOnCanvas
-    [Header("AlwaysOnCanvas Section")]
-    public GameObject AboutSecretMessage;
-    public GameObject AboutLoveCard;
-
-    //In DebugText
-    [Header("DebugText Section")]
-    public GameObject AboutDebugText;
-
-
-    private PlayerProperties playerProperties;
-    private LoadGallery loadGallery;
     private NetworkManager networkManager;
     private PlayerReady playerReady;
-    private QuestionCanvas questionCanvas;
-    private SelectPlayerCanvas selectPlayerCanvas;
     private CanvasManager canvasManager;
-    private AuxiliaryCanvas auxiliaryCanvas;
     private Uploader uploader;
+
+    
+    
+    
+    public DebugCanvas debugCanvas;
+    public AlwaysOnCanvas alwaysOnCanvas;
+    public PreGameCanvas preGameCanvas;
+    public QuestionCanvas questionCanvas;
+    public SelectPlayerCanvas selectPlayerCanvas;
+    public AuxiliaryCanvas auxiliaryCanvas;
+    public MiniGame1 miniGame1;
+    public MiniGame2 miniGame2;
+    
 
     private void Awake()
     {
-        loadGallery = GetComponent<LoadGallery>();
-        playerProperties = FindObjectOfType<PlayerProperties>();
         networkManager = FindObjectOfType<NetworkManager>();
         playerReady = FindObjectOfType<PlayerReady>();
+        canvasManager = FindObjectOfType<CanvasManager>();
+        uploader = FindObjectOfType<Uploader>();
+
+        /*
+        debugCanvas = FindObjectOfType<DebugCanvas>();
+        alwaysOnCanvas = FindObjectOfType<AlwaysOnCanvas>();
+        preGameCanvas = FindObjectOfType<PreGameCanvas>();
         questionCanvas = FindObjectOfType<QuestionCanvas>();
         selectPlayerCanvas = FindObjectOfType<SelectPlayerCanvas>();
-        canvasManager = FindObjectOfType<CanvasManager>();
         auxiliaryCanvas = FindObjectOfType<AuxiliaryCanvas>();
-        uploader = FindObjectOfType<Uploader>();
+        miniGame1 = FindObjectOfType<MiniGame1>();
+        miniGame2 = FindObjectOfType<MiniGame2>();
+        */
     }
 
     public void OnPreGameCanvasConfirm()
     {
         GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
-        GameObject targetPanel = clickedButton.transform.parent.gameObject;
+        GameObject targetPanel = FindParentWithTag(clickedButton, "Panel");
         Text buttonText = clickedButton.GetComponentInChildren<Text>();
         
-        if (targetPanel == PanelNameInput)
+        if (targetPanel == preGameCanvas.GetPanel("nameInput"))
         {
-            SetName();
+            preGameCanvas.SetName();
 
-            PanelNameInput.SetActive(false);
-            PanelImageInput.SetActive(true);
+            preGameCanvas.SetActiveDisplay("nameInput", false);
+            preGameCanvas.SetActiveDisplay("imageInput", true);
         }
-        else if (targetPanel == PanelImageInput)
+        else if (targetPanel == preGameCanvas.GetPanel("imageInput"))
         {
-            SetImage();
+            preGameCanvas.SetImage();
 
-            PanelImageInput.SetActive(false);
-            PanelGenderSelect.SetActive(true);
+            preGameCanvas.SetActiveDisplay("imageInput", false);
+            preGameCanvas.SetActiveDisplay("genderSelect", true);
         }
-        else if (targetPanel == PanelGenderSelect)
+        else if (targetPanel == preGameCanvas.GetPanel("genderSelect"))
         {
-            SetGender();
+            preGameCanvas.SetGender();
 
-            PanelGenderSelect.SetActive(false);
-            PanelRoomEntry.SetActive(true);
+            preGameCanvas.SetActiveDisplay("genderSelect", false);
+            preGameCanvas.SetActiveDisplay("roomEntry", true);            
         }
-        else if (targetPanel == PanelRoomEntry)
+        else if (targetPanel == preGameCanvas.GetPanel("roomEntry"))
         {
-            if (buttonText.text == "방만들기") PanelMaxSelect.SetActive(true); 
-            else if (buttonText.text == "입장하기") PanelRoomSelect.SetActive(true);
+            if (buttonText.text == "방만들기") preGameCanvas.SetActiveDisplay("maxSelect", true);
+            else if (buttonText.text == "입장하기") preGameCanvas.SetActiveDisplay("roomSelect", true);
         }
-        else if (targetPanel == PanelMaxSelect)
+        else if (targetPanel == preGameCanvas.GetPanel("maxSelect"))
         {
             string txt = clickedButton.GetComponentInChildren<Text>().text;
 
@@ -137,24 +86,22 @@ public class ButtonManager : MonoBehaviour
             else if (txt == "4인") GameManager.Instance.SetPlayerMaxNumber(4);
             else if (txt == "6인") GameManager.Instance.SetPlayerMaxNumber(6);
 
-            // GameManager.Instance.SetPlayerMaxNumber(1); test용
-
-            PanelMaxSelect.SetActive(false);
+            preGameCanvas.SetActiveDisplay("maxSelect", false);
             networkManager.Connect("방만들기");
-            PanelLoading.SetActive(true);
+            preGameCanvas.SetActiveDisplay("loading", true);
         }
-        else if (targetPanel == PanelRoomSelect)
+        else if (targetPanel == preGameCanvas.GetPanel("roomSelect"))
         {
             string roomCode = targetPanel.GetComponentInChildren<InputField>().text;
             networkManager.Connect("입장하기"+roomCode);
 
-            PanelLoading.SetActive(true);
+            preGameCanvas.SetActiveDisplay("loading", true);
         }
-        else if (targetPanel == PanelLoading)
+        else if (targetPanel == preGameCanvas.GetPanel("loading"))
         {
             
         }
-        else if(targetPanel == PanelRoomDisplay)
+        else if(targetPanel == preGameCanvas.GetPanel("roomDisplay"))
         {
             playerReady.OnButtonClick(buttonText.text);
             if (buttonText.text == "준비")
@@ -168,129 +115,79 @@ public class ButtonManager : MonoBehaviour
         }
     }
 
-    public void SetInit()
-    {
-        PanelRoomDisplay.transform.Find("ReadyButton").GetComponentInChildren<Text>().text = "준비";
-    }
-
-    private void SetName()
-    {
-        String name = PanelNameInput.GetComponentInChildren<InputField>().text;
-        playerProperties.SetName(name);
-    }
-
-    private void SetImage()
-    {
-        // 프로필 이미지로 설정된 이미지를 가져와서 firebase storage에 저장하고 URL을 가져와서 playerProperties에 저장함.
-        Texture2D profileImage = PanelImageInput.transform.Find("ProfileImage").transform.Find("ImageSource").GetComponent<Image>().sprite.texture;
-
-        profileImage = loadGallery.ConvertToReadableTexture(profileImage); // LoadGallery에서 가져와 기본 이미지도 설정 변경해줌.
-
-        playerProperties.SetImage(profileImage);
-    }
-
-    private void SetGender()
-    {
-        GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
-        Text buttonText = clickedButton.GetComponentInChildren<Text>();
-
-        if (buttonText.text == "남성") playerProperties.GenderIsMale();
-        else if (buttonText.text == "여성") playerProperties.GenderIsFemale();
-    }
-
     public void OnPreGameCanvasCancel()
     {
         GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
-        GameObject targetPanel = clickedButton.transform.parent.gameObject;
+        GameObject targetPanel = FindParentWithTag(clickedButton, "Panel");
 
-        if (targetPanel == PanelNameInput)
+        if (targetPanel == preGameCanvas.GetPanel("nameInput"))
         {
             //
         }
-        else if (targetPanel == PanelImageInput)
+        else if (targetPanel == preGameCanvas.GetPanel("imageInput"))
         {
-            PanelImageInput.SetActive(false);
-            PanelNameInput.SetActive(true);
+            preGameCanvas.SetActiveDisplay("imageInput", false);
+            preGameCanvas.SetActiveDisplay("nameInput", true);
         }
-        else if (targetPanel == PanelGenderSelect)
+        else if (targetPanel == preGameCanvas.GetPanel("genderSelect"))
         {
-            PanelGenderSelect.SetActive(false);
-            PanelImageInput.SetActive(true);
+            preGameCanvas.SetActiveDisplay("genderSelect", false);
+            preGameCanvas.SetActiveDisplay("imageInput", true);
         }
-        else if (targetPanel == PanelRoomEntry)
+        else if (targetPanel == preGameCanvas.GetPanel("roomEntry"))
         {
-            PanelRoomEntry.SetActive(false);
-            PanelGenderSelect.SetActive(true);
+            preGameCanvas.SetActiveDisplay("roomEntry", false);
+            preGameCanvas.SetActiveDisplay("genderSelect", true);
         }
-        else if(targetPanel == PanelMaxSelect)
+        else if(targetPanel == preGameCanvas.GetPanel("maxSelect"))
         {
-            PanelMaxSelect.SetActive(false);
-            PanelRoomEntry.SetActive(true);
+            preGameCanvas.SetActiveDisplay("maxSelect", false);
+            preGameCanvas.SetActiveDisplay("roomEntry", true);
         }
-        else if (targetPanel == PanelRoomSelect)
+        else if (targetPanel == preGameCanvas.GetPanel("roomSelect"))
         {
-            PanelRoomSelect.SetActive(false);
-            PanelRoomEntry.SetActive(true);
+            preGameCanvas.SetActiveDisplay("roomSelect", false);
+            preGameCanvas.SetActiveDisplay("roomEntry", true);
         }
-        else if (targetPanel == PanelLoading)
+        else if (targetPanel == preGameCanvas.GetPanel("loading"))
         {
             ;
         }
-        else if (targetPanel == PanelRoomDisplay)
+        else if (targetPanel == preGameCanvas.GetPanel("roomDisplay"))
         {
-            PanelRoomDisplay.SetActive(false);
-            PanelRoomEntry.SetActive(true);
+            preGameCanvas.SetActiveDisplay("roomDisplay", false);
+            preGameCanvas.SetActiveDisplay("roomEntry", true);
             PhotonNetwork.Disconnect(); // leaveRoom 하지 않는 이유는 Room을 나가면 Lobby로 가게 되는데 NetworkManager의 OnJoinedLobby의 로직과 맞지 않음.
         }
-    }
-
-    public void OnRoomJoined()
-    {
-        PanelRoomEntry.SetActive(false);
-        PanelRoomSelect.SetActive(false);
-        PanelLoading.SetActive(false);
-        PanelRoomDisplay.SetActive(true);
-    }
-
-    public void OnRoomFailed()
-    {
-        PanelLoading.SetActive(false);
-        PhotonNetwork.Disconnect();
-    }
-
-    public void ReadyToStartGame()
-    {
-        PanelRoomDisplay.SetActive(false);
-        PanelReadyToStart.SetActive(true);
     }
 
     public void OnQuestionCanvasConfirm()
     {
         GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
-        GameObject targetPanel = clickedButton.transform.parent.gameObject;
+        GameObject targetPanel = FindParentWithTag(clickedButton, "Panel");
         Text buttonText = clickedButton.GetComponentInChildren<Text>();
 
-        if (targetPanel == AskQuestion1)
+        if (targetPanel == questionCanvas.GetPanel("askQuestion1"))
         {
-            questionCanvas.CheckAnswer(AskQuestion1);
+            questionCanvas.CheckAnswer(targetPanel);
             if (!questionCanvas.GetNextSign()) return;
-            AskQuestion2.SetActive(true);
+            questionCanvas.SetActiveDisplay("askQuestion2", true);
         }
-        else if(targetPanel == AskQuestion2)
+        else if(targetPanel == questionCanvas.GetPanel("askQuestion2"))
         {
-            questionCanvas.CheckAnswer(AskQuestion2);
+            questionCanvas.CheckAnswer(targetPanel);
             if (!questionCanvas.GetNextSign()) return;
-            AskQuestion3.SetActive(true);
+            questionCanvas.SetActiveDisplay("askQuestion3", true);
         }
-        else if(targetPanel == AskQuestion3)
+        else if(targetPanel == questionCanvas.GetPanel("askQuestion3"))
         {
-            questionCanvas.CheckAnswer(AskQuestion3);
+            questionCanvas.CheckAnswer(targetPanel);
             if (!questionCanvas.GetNextSign()) return;
-            AskQuestion4.SetActive(true);
+            questionCanvas.SetActiveDisplay("askQuestion4", true);
         }
-        else if(targetPanel == AskQuestion4)
+        else if(targetPanel == questionCanvas.GetPanel("askQuestion4"))
         {
-            questionCanvas.CheckAnswer(AskQuestion4);
+            questionCanvas.CheckAnswer(targetPanel);
             if (!questionCanvas.GetNextSign()) return;
             questionCanvas.SubmitAnswer();
             
@@ -302,48 +199,45 @@ public class ButtonManager : MonoBehaviour
     public void OnQuestionCanvasCancel()
     {
         GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
-        GameObject targetPanel = clickedButton.transform.parent.gameObject;
+        GameObject targetPanel = FindParentWithTag(clickedButton, "Panel");
         Text buttonText = clickedButton.GetComponentInChildren<Text>();
 
-        if (targetPanel == AskQuestion1)
+        if (targetPanel == questionCanvas.GetPanel("askQuestion1"))
         {
             //
         }
-        else if (targetPanel == AskQuestion2)
+        else if (targetPanel == questionCanvas.GetPanel("askQuestion2"))
         {
-            AskQuestion2.SetActive(false);
-            AskQuestion1.SetActive(true);
+            questionCanvas.SetActiveDisplay("askQuestion2", false);
+            questionCanvas.SetActiveDisplay("askQuestion1", true);
         }
-        else if (targetPanel == AskQuestion3)
+        else if (targetPanel == questionCanvas.GetPanel("askQuestion3"))
         {
-            AskQuestion3.SetActive(false);
-            AskQuestion2.SetActive(true);
+            questionCanvas.SetActiveDisplay("askQuestion3", false);
+            questionCanvas.SetActiveDisplay("askQuestion2", true);
         }
-        else if (targetPanel == AskQuestion4)
+        else if (targetPanel == questionCanvas.GetPanel("askQuestion4"))
         {
-            AskQuestion4.SetActive(false);
-            AskQuestion3.SetActive(true);
+            questionCanvas.SetActiveDisplay("askQuestion4", false);
+            questionCanvas.SetActiveDisplay("askQuestion3", true);
         }
     }
 
     public void OnSelectPlayerCanvasConfirm()
     {
         GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
-        GameObject targetPanel = clickedButton.transform.parent.gameObject;
+        GameObject targetPanel = FindParentWithTag(clickedButton, "Panel");
         Text buttonText = clickedButton.GetComponentInChildren<Text>();
         
 
-        if (targetPanel == FirstImpressionDisplay)
+        if (targetPanel == selectPlayerCanvas.GetPanel("loveCardDisplay"))
         {
         }
-        else if (targetPanel == LoveCardDisplay)
-        {
-        }
-        else if (targetPanel == SecretMessageDisplay)
+        else if (targetPanel == selectPlayerCanvas.GetPanel("secretMessageDisplay"))
         {
             if (buttonText.text == "건너뛰기")
             {
-                SecretMessageDisplay.SetActive(false);
+                selectPlayerCanvas.SetActiveDisplay("secretMessageDisplay", false);
             }
         }
     }
@@ -351,18 +245,14 @@ public class ButtonManager : MonoBehaviour
     public void OnSelectPlayerCanvasSelecting()
     {
         GameObject clickedButton    = EventSystem.current.currentSelectedGameObject;
-        GameObject targetPanel      = clickedButton.transform.parent.parent.parent.gameObject;
+        GameObject targetPanel      = FindParentWithTag(clickedButton, "Panel");
 
-        GameObject targetPlayer     = clickedButton.transform.parent.parent.gameObject;
+        GameObject targetPlayer     = FindParentWithTag(clickedButton, "Player");
         Text actorNumberText        = targetPlayer.transform.Find("PlayerActorNumber").GetComponent<Text>();
 
-        // 테스트용 Mock 데이터 설정
-        int targetActorNumber = actorNumberText.text == "Empty" ? GetMockActorNumber() : int.Parse(actorNumberText.text);
+        int targetActorNumber = int.Parse(actorNumberText.text);
 
-        /*string targetString         = targetPlayer.transform.Find("PlayerActorNumber").GetComponent<Text>().text;
-        int targetActorNumber       = targetString != "Empty" ? int.Parse(targetString) : -1;*/
-
-        if (targetPanel == LoveCardDisplay)
+        if (targetPanel == selectPlayerCanvas.GetPanel("loveCardDisplay"))
         {
             if (targetActorNumber != -1)
             {
@@ -373,7 +263,7 @@ public class ButtonManager : MonoBehaviour
                 // 플레이어를 눌렀지만, 해당 플레이어의 ActorNumber가 Empty인 버그이므로, Error처리.
                 PhotonNetwork.Disconnect(); // 이거 말고도 따로 필요함.
             }
-            LoveCardDisplay.SetActive(false);
+            selectPlayerCanvas.SetActiveDisplay("secretMessageDisplay", false);
 
             if (!GameManager.Instance.GetSignMG1())
             {
@@ -385,37 +275,34 @@ public class ButtonManager : MonoBehaviour
                 canvasManager.TurnOffAndOn(canvasManager.SelectPlayerCanvas, canvasManager.MiniGame2);
                 uploader.UploadReadyCount("MiniGame2");
             }
+            else
+            {
+                // MiniGame2 끝난 후, 호감카드 전송까지 마치고.. 임시로 종료
+                // 추가해야함.
+            }
                 
             // else
         }
 
 
-        else if (targetPanel == SecretMessageDisplay)
+        else if (targetPanel == selectPlayerCanvas.GetPanel("secretMessageDisplay"))
         {
-            GameObject messageScreen = SecretMessageDisplay.transform.Find("MessageScreen").gameObject;
+            GameObject messageScreen = selectPlayerCanvas.GetPanel("messageScreen");
             if (targetActorNumber != -1)
             {
                 string targetName = targetPlayer.transform.Find("PlayerName").GetComponent<Text>().text;
-                messageScreen.SetActive(true);
+                selectPlayerCanvas.SetActiveDisplay("messageScreen", true);
                 messageScreen.transform.Find("TargetPlayerName").GetComponent<Text>().text = targetName;
                 messageScreen.transform.Find("TargetPlayerActorNumber").GetComponent<Text>().text = targetActorNumber.ToString();
             }
         }
     }
 
-    // Mock ActorNumber 생성 함수
-    private int GetMockActorNumber()
-    {
-        // 테스트 시 사용할 임의의 ActorNumber 반환 (예: 9999)
-        return 9999;
-    }
-
     public void OnMessageScreen() // SelectPlayerCanvas의 SecretMessageDisplay에 속한 보조 패널.
                                   // AuxiliaryCanvas로 가거나 SelectPlayerCanvas의 직속으로 바꿔야 할까?
     {
-        
         GameObject clickedButton    = EventSystem.current.currentSelectedGameObject;
-        GameObject messageScreen    = clickedButton.transform.parent.gameObject;
+        GameObject messageScreen    = selectPlayerCanvas.GetPanel("messageScreen");
         Text buttonText             = clickedButton.GetComponentInChildren<Text>();
         int targetActorNumber       = int.Parse(messageScreen.transform.Find("TargetPlayerActorNumber").GetComponent<Text>().text);
         Text message              = messageScreen.transform.Find("InputField/Text").GetComponent<Text>();
@@ -424,47 +311,27 @@ public class ButtonManager : MonoBehaviour
         {
             selectPlayerCanvas.SendSecretMessage(targetActorNumber, message.text);
 
-            messageScreen.SetActive(false);
-            SecretMessageDisplay.SetActive(false);
+            selectPlayerCanvas.SetActiveDisplay("messageScreen", false);
+            selectPlayerCanvas.SetActiveDisplay("secretMessageDisplay", false);
         }
         else if (buttonText.text == "취소")
         {
-            messageScreen.SetActive(false);
+            selectPlayerCanvas.SetActiveDisplay("messageScreen", false);
         }
     }
 
     public void OnAlwaysOnCanvasConfirm()
     {
         GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
-        GameObject targetPanel = clickedButton.transform.parent.gameObject;
-        Text buttonText = clickedButton.GetComponentInChildren<Text>();
 
-        GameObject messageBox = targetPanel.transform.parent.Find("AboutSecretMessage/MessageBox").gameObject;
-        GameObject loveCardDisplay = targetPanel.transform.parent.Find("AboutLoveCard/LoveCardDisplay").gameObject;
-
-        if (targetPanel == AboutSecretMessage && buttonText.text == "M")
+        if (clickedButton == alwaysOnCanvas.GetPanel("messageBtn"))
         {
-            ToggleDisplay(messageBox, loveCardDisplay);
+            alwaysOnCanvas.ToggleDisplay(alwaysOnCanvas.GetPanel("messageDisplay"), alwaysOnCanvas.GetPanel("loveCardDisplay"));
         }
 
-        else if (targetPanel == AboutLoveCard && buttonText.text == "L")
+        else if (clickedButton == alwaysOnCanvas.GetPanel("loveCardBtn"))
         {
-            ToggleDisplay(loveCardDisplay, messageBox);
-        }
-    }
-
-    private void ToggleDisplay(GameObject displayToToggle, GameObject otherDisplay)
-    {
-        // 현재 패널 활성화/비활성화
-        if (displayToToggle != null)
-        {
-            displayToToggle.SetActive(!displayToToggle.activeSelf);
-        }
-
-        // 다른 패널이 활성화되어 있으면 비활성화
-        if (otherDisplay != null && otherDisplay.activeSelf)
-        {
-            otherDisplay.SetActive(false);
+            alwaysOnCanvas.ToggleDisplay(alwaysOnCanvas.GetPanel("loveCardDisplay"), alwaysOnCanvas.GetPanel("messageDisplay"));
         }
     }
 
@@ -480,13 +347,13 @@ public class ButtonManager : MonoBehaviour
             return;
         }
 
-        if (targetPanel == MiniGameSelectDisplay)
+        if (targetPanel == auxiliaryCanvas.GetPanel("miniGameSelectDisplay"))
         {
-            GameObject targetPlayer = clickedButton.transform.parent.parent.gameObject;
+            GameObject targetPlayer = FindParentWithTag(clickedButton, "Player");
             Text actorNumberText = targetPlayer.transform.Find("PlayerActorNumber").GetComponent<Text>();
 
             // 테스트용 Mock 데이터 설정
-            int targetActorNumber = actorNumberText.text == "Empty" ? GetMockActorNumber() : int.Parse(actorNumberText.text);
+            int targetActorNumber = int.Parse(actorNumberText.text);
 
             if (targetActorNumber == -1)
             {
@@ -494,41 +361,40 @@ public class ButtonManager : MonoBehaviour
                 PhotonNetwork.Disconnect(); // 이거 말고도 따로 필요함.
             }
 
-
             string currCanvas = canvasManager.GetCurrCanvas();
             if (currCanvas == "MiniGame1")
             {
-                auxiliaryCanvas.selectDisplay.SetActive(false);
+                auxiliaryCanvas.SetActiveDisplay("miniGameSelectDisplay", false);
 
                 if (auxiliaryCanvas.GetSelectDisplayConcept() == "가장 많이 뽑힌 사람은 누구일까요?")
                 {
                     Debug.Log("auxiliaryCanvas.GetSelectDisplayConcept() == \"가장 많이 뽑힌 사람은 누구일까요?\" check in");
                     uploader.UploadSelectionMG1(targetActorNumber);
-                    canvasManager.MiniGame1.GetComponent<MiniGame1>().AfterSelection();
-                    ResultDisplay1.SetActive(true);
+                    miniGame1.AfterSelection();
+                    miniGame1.SetActiveDisplay("resultDisplay", true);
                 }
                 else
                 {
                     Debug.Log("else check in");
                     uploader.UploadReceivedVotesMG1(targetActorNumber);
-                    canvasManager.MiniGame1.GetComponent<MiniGame1>().AfterSelection();
+                    miniGame1.AfterSelection();
                     auxiliaryCanvas.SetSelectDisplayConcept("가장 많이 뽑힌 사람은 누구일까요?");
-                    BaseDisplay1.SetActive(false);
-                    WaitDisplay1.SetActive(true);
+                    miniGame1.SetActiveDisplay("baseDisplay", false);
+                    miniGame1.SetActiveDisplay("waitDisplay", true);
                 }
             }
             // MiniGame2는 필요없음.
             Debug.Log("OnAuxiliaryCanvas check out");
         }
 
-        else if (targetPanel == Timer)
+        else if (targetPanel == auxiliaryCanvas.GetPanel("timer"))
         {
-            Timer.transform.Find("ButtonSkip").gameObject.SetActive(false);
+            auxiliaryCanvas.GetPanel("timer").transform.Find("ButtonSkip").gameObject.SetActive(false);
             string type = canvasManager.GetCurrCanvas() + "Timer";
             uploader.UploadReadyCount(type);
         }
 
-        else if(targetPanel == RewardEffect)
+        else if(targetPanel == auxiliaryCanvas.GetPanel("rewardEffect"))
         {
             if (buttonText.text == "확인")
             {
@@ -549,26 +415,24 @@ public class ButtonManager : MonoBehaviour
     public void OnMiniGame1Canvas()
     {
         GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
-        GameObject targetPanel = clickedButton.transform.parent.gameObject;
+        GameObject targetPanel = FindParentWithTag(clickedButton, "Panel");
         Text buttonText = clickedButton.GetComponentInChildren<Text>();
 
-        if (targetPanel == BaseDisplay1)
+        if (targetPanel == miniGame1.GetPanel("baseDisplay"))
         {
             if (buttonText.text == "선택하기")
             {
-                MiniGameSelectDisplay.SetActive(true);
-                BaseDisplay1.SetActive(false);
+                auxiliaryCanvas.SetActiveDisplay("miniGameSelectDisplay", true);
+                miniGame1.SetActiveDisplay("baseDisplay", false);
             }
         }
-        else if (targetPanel == ResultDisplay1)
+        else if (targetPanel == miniGame1.GetPanel("resultDisplay"))
         {
             if (buttonText.text == "확인")
             {
-                //이 이전에 보상 추가하기.
-                //canvasManager.TurnOffAndOn(canvasManager.MiniGame1, canvasManager.MiniGame2);
                 GameManager.Instance.SetSignMG1(true);
                 auxiliaryCanvas.SetActiveDisplay("rewardEffect", true);
-                ResultDisplay1.SetActive(false);
+                miniGame1.SetActiveDisplay("resultDisplay", false);
             }
         }
     }
@@ -576,12 +440,11 @@ public class ButtonManager : MonoBehaviour
     public void OnMiniGame2Canvas()
     {
         GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
-        GameObject targetPanel = clickedButton.transform.parent.gameObject;
+        GameObject targetPanel = FindParentWithTag(clickedButton, "Panel");
         Text buttonText = clickedButton.GetComponentInChildren<Text>();
 
-        if (targetPanel == BaseDisplay2)
+        if (targetPanel == miniGame2.GetPanel("baseDisplay"))
         {
-            MiniGame2 miniGame2 = canvasManager.MiniGame2.GetComponent<MiniGame2>();
             if (clickedButton.name == "ButtonLeft")
             {
                 miniGame2.AfterSelection(0);
@@ -590,17 +453,17 @@ public class ButtonManager : MonoBehaviour
             {
                 miniGame2.AfterSelection(1);
             }
-            BaseDisplay2.SetActive(false);
-            WaitDisplay2.SetActive(true);
+            miniGame2.SetActiveDisplay("baseDisplay", false);
+            miniGame2.SetActiveDisplay("waitDisplay", true);
         }
-        else if(targetPanel == ResultDisplay2)
+        else if(targetPanel == miniGame2.GetPanel("resultDisplay"))
         {
             if (buttonText.text == "확인")
             {
                 //이 이전에 보상 추가하기.
                 GameManager.Instance.SetSignMG2(true);
                 auxiliaryCanvas.SetActiveDisplay("rewardEffect", true);
-                ResultDisplay2.SetActive(false);
+                miniGame2.SetActiveDisplay("resultDisplay", false);
             }
         }
     }
@@ -632,7 +495,7 @@ public class ButtonManager : MonoBehaviour
 
         if(targetText != null && targetText.text == "D")
         {
-            ToggleDisplay(debugBox, null);
+            debugCanvas.ToggleDisplay(debugBox, null);
         }
     }
 }

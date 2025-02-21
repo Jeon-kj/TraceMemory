@@ -115,7 +115,7 @@ public class MiniGame2 : MonoBehaviourPunCallbacks
 
     public void WaitAnoterPlayer()
     {
-        baseDisplay.gameObject.SetActive(true);
+        SetActiveDisplay("baseDisplay", true);
         baseDisplay.transform.Find("ButtonLeft").gameObject.SetActive(false);
         baseDisplay.transform.Find("ButtonRight").gameObject.SetActive(false);
         baseDisplay.transform.Find("Question").GetComponent<Text>().text = "선택 완료했습니다!";
@@ -136,8 +136,8 @@ public class MiniGame2 : MonoBehaviourPunCallbacks
         {
             topScorer.GetComponent<Text>().text += "두 선택지를 선택한 사람의 수가 동일합니다.";
 
-            waitDisplay.SetActive(false);
-            resultDisplay.SetActive(true);
+            SetActiveDisplay("waitDisplay", false);
+            SetActiveDisplay("resultDisplay", true);
             return;
         }
 
@@ -164,14 +164,14 @@ public class MiniGame2 : MonoBehaviourPunCallbacks
             topScorer.GetComponent<Text>().text += $"{targetName}\n";
         }
 
-        waitDisplay.SetActive(false);
-        resultDisplay.SetActive(true);
+        SetActiveDisplay("waitDisplay", false);
+        SetActiveDisplay("resultDisplay", true);
     }
 
     public void StartMiniGame()
     {
-        waitDisplay.SetActive(false);
-        baseDisplay.SetActive(true);
+        SetActiveDisplay("waitDisplay", false);
+        SetActiveDisplay("baseDisplay", true);
         // timer 시작 함수.
         /*
         AuxiliaryCanvas auxiliaryCanvas = canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>();
@@ -182,8 +182,47 @@ public class MiniGame2 : MonoBehaviourPunCallbacks
     public void TimeOver()
     {
         AuxiliaryCanvas auxiliaryCanvas = canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>();
-        baseDisplay.SetActive(false);
-        auxiliaryCanvas.timer.SetActive(false);
-        auxiliaryCanvas.selectDisplay.SetActive(true);
+        SetActiveDisplay("baseDisplay", false);
+        auxiliaryCanvas.SetActiveDisplay("timer", false);
+        auxiliaryCanvas.SetActiveDisplay("miniGameSelectDisplay", true);
+    }
+
+    public void SetActiveDisplay(string target, bool sign)
+    {
+        switch (target)
+        {
+            case "baseDisplay":
+                baseDisplay.SetActive(sign);
+                break;
+            case "waitDisplay":
+                waitDisplay.SetActive(sign);
+                break;
+            case "resultDisplay":
+                resultDisplay.SetActive(sign);
+                break;
+            default:
+                throw new ArgumentException("Invalid target specified: " + target);
+        }
+    }
+
+    public GameObject GetPanel(string target)
+    {
+        GameObject gameObject = null;
+        switch (target)
+        {
+            case "baseDisplay":
+                gameObject = baseDisplay;
+                break;
+            case "waitDisplay":
+                gameObject = waitDisplay;
+                break;
+            case "resultDisplay":
+                gameObject = resultDisplay;
+                break;
+            default:
+                throw new ArgumentException("Invalid target specified: " + target);
+        }
+
+        return gameObject;
     }
 }

@@ -29,6 +29,8 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
     Uploader uploader;
     Loader loader;
 
+    public object rewardEffect { get; private set; }
+
     private void Awake()
     {
         canvasManager = FindObjectOfType<CanvasManager>();
@@ -141,8 +143,8 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
             topScorer.GetComponent<Text>().text += $"{targetName}\n";
         }
 
-        waitDisplay.SetActive(false);
-        canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>().selectDisplay.SetActive(true);
+        SetActiveDisplay("waitDisplay", false);
+        canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>().SetActiveDisplay("miniGameSelectDisplay", true);
     }
 
     public async void ProcessTopPredictors()
@@ -191,8 +193,8 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
 
     public void StartMiniGame()
     {
-        waitDisplay.SetActive(false);
-        baseDisplay.SetActive(true);
+        SetActiveDisplay("waitDisplay", false);
+        SetActiveDisplay("baseDisplay", true);
         // timer 시작 함수.
         AuxiliaryCanvas auxiliaryCanvas = canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>();        
         auxiliaryCanvas.StartTimer();
@@ -201,8 +203,47 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
     public void TimeOver()
     {
         AuxiliaryCanvas auxiliaryCanvas = canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>();
-        baseDisplay.SetActive(false);
-        auxiliaryCanvas.timer.SetActive(false);
-        auxiliaryCanvas.selectDisplay.SetActive(true);
+        SetActiveDisplay("baseDisplay", false);
+        auxiliaryCanvas.SetActiveDisplay("timer", false);
+        auxiliaryCanvas.SetActiveDisplay("miniGameSelectDisplay", true);
+    }
+
+    public void SetActiveDisplay(string target, bool sign)
+    {
+        switch (target)
+        {
+            case "baseDisplay":
+                baseDisplay.SetActive(sign);
+                break;
+            case "waitDisplay":
+                waitDisplay.SetActive(sign);
+                break;
+            case "resultDisplay":
+                resultDisplay.SetActive(sign);
+                break;
+            default:
+                throw new ArgumentException("Invalid target specified: " + target);
+        }
+    }
+
+    public GameObject GetPanel(string target)
+    {
+        GameObject gameObject = null;
+        switch (target)
+        {
+            case "baseDisplay":
+                gameObject = baseDisplay;
+                break;
+            case "waitDisplay":
+                gameObject = waitDisplay;
+                break;
+            case "resultDisplay":
+                gameObject = resultDisplay;
+                break;
+            default:
+                throw new ArgumentException("Invalid target specified: " + target);
+        }
+
+        return gameObject;
     }
 }

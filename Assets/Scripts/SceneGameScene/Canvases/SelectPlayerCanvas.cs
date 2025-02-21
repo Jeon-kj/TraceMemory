@@ -1,4 +1,5 @@
 using Photon.Pun;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,9 +9,14 @@ public class SelectPlayerCanvas : MonoBehaviour
 {
     Uploader uploader;
 
-    public GameObject roomDisplay;
+    [Header("Family Section")]
     public GameObject loveCardDisplay;
     public GameObject secretMessageDisplay;
+    public GameObject messageScreen;
+    [Space(10)]
+
+    [Header("Other Section")]
+    public GameObject roomDisplay;
 
     private void Awake()
     {
@@ -35,9 +41,9 @@ public class SelectPlayerCanvas : MonoBehaviour
 
     private void InitializedCanvas()
     {
-        loveCardDisplay.SetActive(true); 
-        secretMessageDisplay.SetActive(true);
-        
+        SetActiveDisplay("loveCardDisplay", true);
+        SetActiveDisplay("secretMessageDisplay", true);
+
         InputField inputField = secretMessageDisplay.transform.Find("MessageScreen/InputField").GetComponent<InputField>();
         inputField.text = "";
     }
@@ -87,5 +93,44 @@ public class SelectPlayerCanvas : MonoBehaviour
     public void SendSecretMessage(int targetActorNumber, string message)
     {
         uploader.UploadSecretMessage(targetActorNumber, message);
+    }
+
+    public void SetActiveDisplay(string target, bool sign)
+    {
+        switch (target)
+        {
+            case "loveCardDisplay":
+                loveCardDisplay.SetActive(sign);
+                break;
+            case "secretMessageDisplay":
+                secretMessageDisplay.SetActive(sign);
+                break;
+            case "messageScreen":
+                messageScreen.SetActive(sign);
+                break;
+            default:
+                throw new ArgumentException("Invalid target specified: " + target);
+        }
+    }
+
+    public GameObject GetPanel(string target)
+    {
+        GameObject gameObject = null;
+        switch (target)
+        {
+            case "loveCardDisplay":
+                gameObject = loveCardDisplay;
+                break;
+            case "secretMessageDisplay":
+                gameObject = secretMessageDisplay;
+                break;
+            case "messageScreen":
+                gameObject = messageScreen;
+                break;
+            default:
+                throw new ArgumentException("Invalid target specified: " + target);
+        }
+
+        return gameObject;
     }
 }

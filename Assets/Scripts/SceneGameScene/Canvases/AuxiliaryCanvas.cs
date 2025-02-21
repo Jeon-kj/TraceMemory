@@ -11,7 +11,7 @@ using UnityEngine.UI;
 public class AuxiliaryCanvas : MonoBehaviourPunCallbacks
 {
     public GameObject roomDisplay;
-    public GameObject selectDisplay;
+    public GameObject miniGameSelectDisplay;
     public GameObject timer;
     public GameObject rewardEffect;
 
@@ -40,7 +40,7 @@ public class AuxiliaryCanvas : MonoBehaviourPunCallbacks
 
         // 모든 자식 Transform을 한 번에 가져옴 (비활성화 포함)
         Transform[] roomDisplayChildren = roomDisplay.GetComponentsInChildren<Transform>(true);
-        Transform[] selectDisplayChildren = selectDisplay.GetComponentsInChildren<Transform>(true);
+        Transform[] selectDisplayChildren = miniGameSelectDisplay.GetComponentsInChildren<Transform>(true);
         for (int i = 0; i < maxPlayers / 2; i++)
         {
             for (int j = 0; j < 2; j++)
@@ -89,15 +89,15 @@ public class AuxiliaryCanvas : MonoBehaviourPunCallbacks
 
     public void SetSelectDisplayConcept(string str)
     {
-        Transform concept = selectDisplay.transform.Find("Concept");
+        Transform concept = miniGameSelectDisplay.transform.Find("Concept");
         concept.GetComponent<Text>().text = str;
     }
 
-    public string GetSelectDisplayConcept() { return selectDisplay.transform.Find("Concept").GetComponent<Text>().text; }
+    public string GetSelectDisplayConcept() { return miniGameSelectDisplay.transform.Find("Concept").GetComponent<Text>().text; }
 
     public string GetPlayerName(int targetActorNumber)
     {
-        Transform[] selectDisplayChildren = selectDisplay.GetComponentsInChildren<Transform>(true);
+        Transform[] selectDisplayChildren = miniGameSelectDisplay.GetComponentsInChildren<Transform>(true);
 
         string targetName = "";
         foreach(Transform t in selectDisplayChildren)
@@ -247,10 +247,46 @@ public class AuxiliaryCanvas : MonoBehaviourPunCallbacks
 
     public void SetActiveDisplay(string target, bool sign)
     {
-        if(target == "roomDisplay") roomDisplay.SetActive(sign);
-        else if(target == "selectDisplay") selectDisplay.SetActive(sign);
-        else if(target == "timer") timer.SetActive(sign);
-        else if(target == "rewardEffect") rewardEffect.SetActive(sign);
-        else throw new ArgumentException("Invalid target specified: " + target);
+        switch (target)
+        {
+            case "roomDisplay":
+                roomDisplay.SetActive(sign);
+                break;
+            case "miniGameSelectDisplay":
+                miniGameSelectDisplay.SetActive(sign);
+                break;
+            case "timer":
+                timer.SetActive(sign);
+                break;
+            case "rewardEffect":
+                rewardEffect.SetActive(sign);
+                break;
+            default:
+                throw new ArgumentException("Invalid target specified: " + target);
+        }
+    }
+
+    public GameObject GetPanel(string target)
+    {
+        GameObject gameObject = null;
+        switch (target)
+        {
+            case "roomDisplay":
+                gameObject = roomDisplay;
+                break;
+            case "miniGameSelectDisplay":
+                gameObject = miniGameSelectDisplay;
+                break;
+            case "timer":
+                gameObject = timer;
+                break;
+            case "rewardEffect":
+                gameObject = rewardEffect;
+                break;
+            default:
+                throw new ArgumentException("Invalid target specified: " + target);
+        }
+
+        return gameObject;
     }
 }

@@ -786,7 +786,7 @@ public class Loader : MonoBehaviourPunCallbacks
             else
             {
                 // 데이터가 없으면 "000000"을 반환
-                int length = canvasManager.QuestionCanvas.GetComponent<QuestionCanvas>().questions.Length;
+                int length = canvasManager.QuestionCanvas.GetComponent<QuestionCanvas>().askQuestions.Length;
                 return new string('0', length);
             }
         }

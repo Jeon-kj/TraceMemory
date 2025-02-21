@@ -27,4 +27,19 @@ public class DebugCanvas : MonoBehaviour
         debugText.text += "\n";
         debugText.text += msg;
     }
+
+    public void ToggleDisplay(GameObject displayToToggle, GameObject otherDisplay)
+    {
+        // 현재 패널 활성화/비활성화
+        if (displayToToggle != null)
+        {
+            displayToToggle.SetActive(!displayToToggle.activeSelf);
+        }
+
+        // 다른 패널이 활성화되어 있으면 비활성화
+        if (otherDisplay != null && otherDisplay.activeSelf)
+        {
+            otherDisplay.SetActive(false);
+        }
+    }
 }
