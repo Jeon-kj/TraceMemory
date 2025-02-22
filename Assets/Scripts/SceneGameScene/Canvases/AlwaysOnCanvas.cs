@@ -136,7 +136,7 @@ public class AlwaysOnCanvas : MonoBehaviour
 
     private void UpdatePlayerDisplay()
     {
-        int maxPlayers = PhotonNetwork.CurrentRoom.MaxPlayers;
+        int maxPlayers = 6;
 
         // 모든 자식 Transform을 한 번에 가져옴 (비활성화 포함)
         Transform[] roomDisplayChildren = roomDisplay.GetComponentsInChildren<Transform>(true);
