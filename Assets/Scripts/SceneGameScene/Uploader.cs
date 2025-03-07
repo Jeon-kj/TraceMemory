@@ -206,8 +206,8 @@ public class Uploader : MonoBehaviourPunCallbacks
     //All Player Ready?
     public void UploadReadyCount(string type)    // 
     {
-        // roomCode.MiniGame1.VotedCount 해당 경로에 투표에 참여한 인원수 만큼 증가시킴.
-        // gameType <= {"MiniGame1", "MiniGame2"}
+        // roomCode.type.ReadyCount 해당 경로에 준비완료된 사람들의 수를 기록
+        // type <= {"MiniGame1", "MiniGame2", "GameEnd"}
         string roomCode = GameManager.Instance.GetRoomCode();
 
         databaseReference

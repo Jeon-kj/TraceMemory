@@ -31,6 +31,12 @@ public class PreGameCanvas : MonoBehaviour
 
     public void SetInit()
     {
+        nameInput.transform.Find("InputField/Text").GetComponent<Text>().text = string.Empty;
+        roomSelect.transform.Find("InputField/Text").GetComponent<Text>().text = string.Empty;
+    }
+
+    public void ReadyButtonInit()
+    {
         roomDisplay.transform.Find("ReadyButton").GetComponentInChildren<Text>().text = "¡ÿ∫Ò";
     }
 
