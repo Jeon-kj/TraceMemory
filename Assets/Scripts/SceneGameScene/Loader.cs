@@ -11,7 +11,6 @@ using Photon.Pun;
 using Photon.Realtime;
 using System.Globalization;
 using System.Reflection;
-using System.Linq;
 
 public class Loader : MonoBehaviourPunCallbacks
 {
@@ -422,8 +421,8 @@ public class Loader : MonoBehaviourPunCallbacks
     // All Player Ready?
     public void CheckAndNotifyEndOfReady(string type)
     {
-        // roomCode.GameEnd.ReadyCount 해당 경로에, 투표에 참여한 인원의 수가 전체 플레이어 수와 똑같으면 RPC처리.
-        // gameType <= {"MiniGame1", "MiniGame2", "GameEnd"}
+        // roomCode.MiniGame1.VotedCount 해당 경로에, 투표에 참여한 인원의 수가 전체 플레이어 수와 똑같으면 RPC처리.
+        // gameType <= {"MiniGame1", "MiniGame2"}
         var roomRef = databaseReference.Child(GameManager.Instance.GetRoomCode()).Child(type).Child("ReadyCount");
         roomRef.GetValueAsync().ContinueWith(task =>
         {
@@ -476,10 +475,6 @@ public class Loader : MonoBehaviourPunCallbacks
         else if(type == "MiniGame1Timer" || type == "MiniGame2Timer")
         {
             canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>().SetTimerSign(false);
-        }
-        else if(type == "GameEnd")
-        {
-            canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>().GameEnd();
         }
     }
 
@@ -803,57 +798,5 @@ public class Loader : MonoBehaviourPunCallbacks
         }
     }
 
-
-    // About Find winning pair
-    public async Task<(List<Tuple<string, string>>, int)> FindWinningPairAN()
-    {
-        string roomCode = GameManager.Instance.GetRoomCode();
-
-        var actorNumbers = PhotonNetwork.PlayerList.Select(p => p.ActorNumber.ToString()).ToList();
-        var pairs = new List<Tuple<string, string>>();
-        var pairScoreDic = new Dictionary<Tuple<string, string>, int>();
-        var removeAN = new List<string>();
-
-        foreach (var actorNumber in actorNumbers)
-        {
-            if (removeAN.Contains(actorNumber))
-                continue;
-
-            var partnerRef = databaseReference.Child(roomCode).Child(actorNumber).Child("Partner");
-            DataSnapshot snapshot = await partnerRef.GetValueAsync();
-
-            if (snapshot.Value != null)
-            {
-                string partnerAN = snapshot.Value.ToString();
-
-                if (!pairs.Any(p => p.Item1 == partnerAN || p.Item2 == actorNumber))
-                {
-                    var pair = new Tuple<string, string>(actorNumber, partnerAN);
-                    pairs.Add(pair);
-                    removeAN.Add(partnerAN);
-
-                    int score1 = await GetScore(actorNumber);
-                    int score2 = await GetScore(partnerAN);
-                    pairScoreDic[pair] = score1 + score2;
-                }
-            }
-        }
-
-        // 최대 페어 점수 계산
-        int maxScore = pairScoreDic.Values.Max();
-        // 최대 점수를 가진 페어 찾기
-        var winningPairs = pairScoreDic.Where(p => p.Value == maxScore).Select(p => p.Key).ToList();
-
-        return (winningPairs, maxScore);
-    }
-
-    private async Task<int> GetScore(string actorNumber)
-    {
-        string roomCode = GameManager.Instance.GetRoomCode();
-
-        var scoreRef = databaseReference.Child(roomCode).Child(actorNumber).Child("LoveCardScore");
-        DataSnapshot snapshot = await scoreRef.GetValueAsync();
-        return snapshot.Value != null ? int.Parse(snapshot.Value.ToString()) : 0;
-    }
 }
 

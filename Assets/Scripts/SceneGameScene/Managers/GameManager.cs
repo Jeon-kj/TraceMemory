@@ -1,9 +1,6 @@
-using Photon.Pun;
-using Photon.Realtime;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -20,7 +17,6 @@ public class GameManager : MonoBehaviour
     ButtonManager buttonManager;
     PlayerReady playerReady;
     PreGameCanvas preGameCanvas;
-    CanvasManager canvasManager;
 
     private void Awake()
     {
@@ -39,7 +35,6 @@ public class GameManager : MonoBehaviour
         buttonManager = GameObject.FindWithTag("MainButtonManager").GetComponent<ButtonManager>();
         playerReady = FindObjectOfType<PlayerReady>();
         preGameCanvas = FindObjectOfType<PreGameCanvas>();
-        canvasManager = FindObjectOfType<CanvasManager>();
     }
 
     public void CheckIfAllPlayersReady()
@@ -81,53 +76,4 @@ public class GameManager : MonoBehaviour
     public void SetSignMG2(bool sign) { signMG2 = sign; }
 
     public bool GetSignMG2() { return signMG2; }
-
-    public void EndGame()
-    {
-        if (PhotonNetwork.IsMasterClient)
-        {
-            PhotonNetwork.CurrentRoom.IsOpen = false;
-            PhotonNetwork.CurrentRoom.IsVisible = false;
-            PhotonNetwork.LeaveRoom(true);  // 방 삭제 및 모든 플레이어 강제 퇴장
-        }
-        else
-        {
-            PhotonNetwork.LeaveRoom();  // 일반 플레이어는 그냥 방을 나감
-        }
-
-        StartCoroutine(WaitForLeaveAndLoadScene());
-
-        canvasManager.TurnOffAndOn(canvasManager.AuxiliaryCanvas, canvasManager.PreGameCanvas);
-        canvasManager.TurnOffAndOn(canvasManager.AlwaysOnCanvas, null);
-        preGameCanvas.SetInit();
-        preGameCanvas.SetActiveDisplay("nameInput", true);
-    }
-
-    private IEnumerator WaitForLeaveAndLoadScene()
-    {
-        // 방을 완전히 떠날 때까지 기다림
-        while (PhotonNetwork.InRoom || PhotonNetwork.NetworkClientState == ClientState.Leaving)
-        {
-            yield return null;  // 한 프레임 대기
-        }
-
-        // Photon 서버와의 연결이 아직 살아있는지 확인
-        if (PhotonNetwork.IsConnectedAndReady)
-        {
-            // 씬이 존재하는지 확인하고 로드
-            if (SceneManager.GetSceneByName("LobbyScene") != null)
-            {
-                PhotonNetwork.LoadLevel("LobbyScene"); // 로비 씬으로 이동
-            }
-            else
-            {
-                Debug.LogError("LobbyScene is missing from Build Settings!"); // 디버깅 로그
-            }
-        }
-        else
-        {
-            Debug.LogWarning("Photon is not connected. Disconnecting...");
-            PhotonNetwork.Disconnect();
-        }
-    }
 }
