@@ -26,6 +26,7 @@ public class DebugCanvas : MonoBehaviour
     {
         debugText.text += "\n";
         debugText.text += msg;
+        Debug.Log(msg);
     }
 
     public void ToggleDisplay(GameObject displayToToggle, GameObject otherDisplay)

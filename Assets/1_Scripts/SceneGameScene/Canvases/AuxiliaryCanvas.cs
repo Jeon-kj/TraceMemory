@@ -10,10 +10,16 @@ using UnityEngine.UI;
 
 public class AuxiliaryCanvas : MonoBehaviourPunCallbacks
 {
-    public GameObject roomDisplay;
+    [Header("Family Section")]    
     public GameObject miniGameSelectDisplay;
     public GameObject timer;
     public GameObject rewardEffect;
+    public GameObject winner;
+    [Space(10)]
+
+    [Header("Other Section")]
+    public GameObject roomDisplay;
+    [Space(10)]
 
     private bool timerSign = false;
     private System.Random random = new System.Random();  // Random 객체 생성
@@ -57,34 +63,39 @@ public class AuxiliaryCanvas : MonoBehaviourPunCallbacks
                     continue;
                 }
 
-                // PlayerName 복사
-                Text targetNameText = targetTransform.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "PlayerName").GetComponent<Text>();
-                Text sourceNameText = sourceTransform.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "PlayerName").GetComponent<Text>();
-                                
-                if (targetNameText != null && sourceNameText != null)
-                    targetNameText.text = sourceNameText.text;
+                // 공통적인 UI 업데이트 함수 호출
+                UpdateProfileUI(sourceTransform, targetTransform);
 
-
-                // PlayerActorNumber 복사
-                Text targetActorNumberText = targetTransform.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "PlayerActorNumber").GetComponent<Text>();
-                Text sourceActorNumberText = sourceTransform.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "PlayerActorNumber").GetComponent<Text>();
-                if (targetActorNumberText != null && sourceActorNumberText != null)
-                    targetActorNumberText.text = sourceActorNumberText.text;
-
-                // ImageSource 복사
-                Transform maskTransform; // 이러는 이유 : FirstOrDefault(t => t.name == "Mask/ImageSource") 로는 찾을 수가 없었음. 자식과 부모로 인식하지 못하고 이름 그 자체로 인식함.
-                maskTransform = targetTransform.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "Mask");
-                Image targetImage = maskTransform.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "ImageSource").GetComponent<Image>();
-                maskTransform = sourceTransform.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "Mask");
-                Image sourceImage = maskTransform.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "ImageSource").GetComponent<Image>();
-
-                if (targetImage != null && sourceImage != null)
-                    targetImage.sprite = sourceImage.sprite;
-
+                // 만약 플레이어가 비어 있다면 비활성화
+                Text targetNameText = targetTransform.Find("PlayerName").GetComponent<Text>();
                 if (targetNameText != null && targetNameText.text == "Empty")
                     targetTransform.gameObject.SetActive(false);
             }
         }
+    }
+
+    private void UpdateProfileUI(Transform sourceProfile, Transform targetProfile)
+    {
+        // PlayerName 복사
+        Text targetNameText = targetProfile.Find("PlayerName").GetComponent<Text>();
+        Text sourceNameText = sourceProfile.Find("PlayerName").GetComponent<Text>();
+
+        if (targetNameText != null && sourceNameText != null)
+            targetNameText.text = sourceNameText.text;
+
+        // PlayerActorNumber 복사
+        Text targetActorNumberText = targetProfile.Find("PlayerActorNumber").GetComponent<Text>();
+        Text sourceActorNumberText = sourceProfile.Find("PlayerActorNumber").GetComponent<Text>();
+
+        if (targetActorNumberText != null && sourceActorNumberText != null)
+            targetActorNumberText.text = sourceActorNumberText.text;
+
+        // ImageSource 복사
+        Image sourceImage = sourceProfile.Find("Mask/ImageSource").GetComponent<Image>();
+        Image targetImage = targetProfile.Find("Mask/ImageSource").GetComponent<Image>();
+
+        if (targetImage != null && sourceImage != null)
+            targetImage.sprite = sourceImage.sprite;
     }
 
     public void SetSelectDisplayConcept(string str)
@@ -188,7 +199,6 @@ public class AuxiliaryCanvas : MonoBehaviourPunCallbacks
     [PunRPC]
     async void ReceiveMiniGameReward()
     {
-        DebugCanvas.Instance.DebugLog($"Received RPC Call Sign, Execute ReceiveMiniGameReward!");
         int AN = PhotonNetwork.LocalPlayer.ActorNumber;
         int PAN = await loader.PartnerActorNumber(AN);  // PartnerAN
 
@@ -245,6 +255,62 @@ public class AuxiliaryCanvas : MonoBehaviourPunCallbacks
         rewardText.text = "보상을 얻지 못했습니다.";
     }
 
+    // About Winner
+    public async void GameEnd()
+    {        
+        // 승리한 짝 ActorNumber 계산.
+        var (winningPairsAN, maxScore)  = await loader.FindWinningPairAN();
+        // 승리한 짝 프로필 복사하기.
+        UpdateWinnerProfiles(winningPairsAN);
+        SetActiveDisplay("winner", true);
+        winner.transform.Find($"WinnerPanel{winningPairsAN.Count}").gameObject.SetActive(true);
+        winner.transform.Find("Text").GetComponent<Text>().text = $"호감카드의 합이 {maxScore}로 가장 높은 팀.";
+    }
+
+    public void UpdateWinnerProfiles(List<Tuple<string, string>> winningPairsAN)
+    {
+        int count = winningPairsAN.Count;
+
+        // roomDisplay에 있는 모든 Transform 중 "Mask"오브젝트가 자식으로 있는 것만 가져옴 (즉, 프로필 이미지 Transform들)
+        Transform[] sourceProfiles = roomDisplay.GetComponentsInChildren<Transform>(true)
+            .Where(child => child.name == "Mask")  // 이름이 "Mask"인 오브젝트만 필터링
+            .Select(mask => mask.parent)  // "Mask" 오브젝트의 부모를 가져옴
+            .ToArray();
+        // 자식 오브젝트로 프로필 이미지를 가진 패널의 Transform
+        // 우승 커플의 수에 따라 할당되는 Transform이 달라짐.
+        Transform winnerPanel = winner.transform.Find($"WinnerPanel{count}");
+        // winnerPanel의 하위 모든 Transform (즉, 프로필 이미지들을 묶은 WinningPair{i})
+        Transform[] winningPairs = winnerPanel.GetComponentsInChildren<Transform>(true);
+
+        int i = 1;
+        int j = 1;
+        foreach (Tuple<string, string> winningPair in winningPairsAN)
+        {
+            if (i > count) break;
+            foreach (Transform sourceProfile in sourceProfiles)
+            {
+                if (i > count) break;
+
+                string sourceAN = sourceProfile.Find("PlayerActorNumber").GetComponent<Text>().text;
+
+                if (winningPair.Item1 == sourceAN || winningPair.Item2 == sourceAN)
+                {
+                    Transform targetProfile = winningPairs[i].transform.Find($"Player{j}");
+                    UpdateProfileUI(sourceProfile, targetProfile);
+                    j++;
+
+                    if (j == 3)
+                    {
+                        i++;
+                        j = 1;
+                    }
+                }
+            }
+        }
+    }
+
+
+    // About Display
     public void SetActiveDisplay(string target, bool sign)
     {
         switch (target)
@@ -260,6 +326,9 @@ public class AuxiliaryCanvas : MonoBehaviourPunCallbacks
                 break;
             case "rewardEffect":
                 rewardEffect.SetActive(sign);
+                break;
+            case "winner":
+                winner.SetActive(sign);
                 break;
             default:
                 throw new ArgumentException("Invalid target specified: " + target);
@@ -282,6 +351,9 @@ public class AuxiliaryCanvas : MonoBehaviourPunCallbacks
                 break;
             case "rewardEffect":
                 gameObject = rewardEffect;
+                break;
+            case "winner":
+                gameObject = winner;
                 break;
             default:
                 throw new ArgumentException("Invalid target specified: " + target);

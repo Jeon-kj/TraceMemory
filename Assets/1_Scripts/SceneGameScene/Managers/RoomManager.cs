@@ -260,7 +260,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     public override void OnLeftRoom()
     {
-        preGameCanvas.SetInit();        
+        preGameCanvas.ReadyButtonInit();        
         roomDisplay.OnLeftRoom();
     }
 

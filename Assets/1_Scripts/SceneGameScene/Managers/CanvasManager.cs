@@ -4,8 +4,9 @@ using UnityEngine;
 
 public class CanvasManager : MonoBehaviour
 {
-    
+
     [Header("Canvases")]
+    public GameObject DebugCanvas;
     public GameObject PreGameCanvas;
     public GameObject QuestionCanvas;
     public GameObject SelectPlayerCanvas;
@@ -22,7 +23,7 @@ public class CanvasManager : MonoBehaviour
         Debug.Log($"obj1 : {obj1}, obj2 : {obj2}, AuxiliaryCanvas : {AuxiliaryCanvas}");
         if (obj1 != null) obj1.SetActive(false);
         if (obj2 != null) obj2.SetActive(true);
-        if (AuxiliaryCanvas.activeSelf == true && obj2 != AlwaysOnCanvas && obj2 != AuxiliaryCanvas)
+        if (obj2 != null && AuxiliaryCanvas.activeSelf == true && obj2 != AlwaysOnCanvas && obj2 != AuxiliaryCanvas)
             SetCurrCanvas(obj2.name);        
     }
 

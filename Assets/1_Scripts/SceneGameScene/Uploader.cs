@@ -206,8 +206,8 @@ public class Uploader : MonoBehaviourPunCallbacks
     //All Player Ready?
     public void UploadReadyCount(string type)    // 
     {
-        // roomCode.MiniGame1.VotedCount 해당 경로에 투표에 참여한 인원수 만큼 증가시킴.
-        // gameType <= {"MiniGame1", "MiniGame2"}
+        // roomCode.type.ReadyCount 해당 경로에 준비완료된 사람들의 수를 기록
+        // type <= {"MiniGame1", "MiniGame2", "GameEnd"}
         string roomCode = GameManager.Instance.GetRoomCode();
 
         databaseReference
@@ -351,7 +351,6 @@ public class Uploader : MonoBehaviourPunCallbacks
                 }
                 currentCount++;
                 mutableData.Value = currentCount;
-                DebugCanvas.Instance.DebugLog($"---------------UploadVotedCount currentCount: {currentCount}");
                 return TransactionResult.Success(mutableData);
             }).ContinueWith(task =>
             {
@@ -410,7 +409,7 @@ public class Uploader : MonoBehaviourPunCallbacks
     }
 
     // Secret Message
-    public void UploadSecretMessage(int targetActorNumber, string message)
+    public void UploadSecretMessage(int targetActorNumber, string message) // Upload.UploadSecretMessage
     {
         string roomCode = GameManager.Instance.GetRoomCode();
 

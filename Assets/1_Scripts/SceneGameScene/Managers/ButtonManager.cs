@@ -277,8 +277,8 @@ public class ButtonManager : MonoBehaviour
             }
             else
             {
-                // MiniGame2 끝난 후, 호감카드 전송까지 마치고.. 임시로 종료
-                // 추가해야함.
+                canvasManager.TurnOffAndOn(canvasManager.SelectPlayerCanvas, null);
+                uploader.UploadReadyCount("GameEnd");
             }
                 
             // else
@@ -305,11 +305,11 @@ public class ButtonManager : MonoBehaviour
         GameObject messageScreen    = selectPlayerCanvas.GetPanel("messageScreen");
         Text buttonText             = clickedButton.GetComponentInChildren<Text>();
         int targetActorNumber       = int.Parse(messageScreen.transform.Find("TargetPlayerActorNumber").GetComponent<Text>().text);
-        Text message              = messageScreen.transform.Find("InputField/Text").GetComponent<Text>();
+        string message              = messageScreen.transform.transform.Find("InputField").GetComponent<InputField>().text;
 
         if (buttonText.text == "전송")
         {
-            selectPlayerCanvas.SendSecretMessage(targetActorNumber, message.text);
+            selectPlayerCanvas.SendSecretMessage(targetActorNumber, message);
 
             selectPlayerCanvas.SetActiveDisplay("messageScreen", false);
             selectPlayerCanvas.SetActiveDisplay("secretMessageDisplay", false);
@@ -408,6 +408,15 @@ public class ButtonManager : MonoBehaviour
                 {
                     canvasManager.TurnOffAndOn(canvasManager.MiniGame1, canvasManager.SelectPlayerCanvas);
                 }
+            }
+        }
+
+        else if(targetPanel == auxiliaryCanvas.GetPanel("winner"))
+        {
+            if(buttonText.text == "확인")
+            {
+                GameManager.Instance.EndGame();
+                // 이제, 준비된 거 해제하고 다시 시작 전 화면으로 초기화 해야함.
             }
         }
     }

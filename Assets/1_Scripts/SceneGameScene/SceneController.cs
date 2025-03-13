@@ -22,6 +22,7 @@ public class SceneController : MonoBehaviour
         preLifeToTransfer = data;
         genderToTransfer = PhotonNetwork.LocalPlayer.GetPlayerGender();
         SceneManager.LoadScene("Identity", LoadSceneMode.Additive);
+        canvasManager.PreGameCanvas.GetComponent<PreGameCanvas>().SetActiveDisplay("readyToStart", false);
         canvasManager.TurnOffAndOn(canvasManager.PreGameCanvas, canvasManager.QuestionCanvas);
         canvasManager.TurnOffAndOn(null, canvasManager.AuxiliaryCanvas);
     }
