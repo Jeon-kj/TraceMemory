@@ -5,9 +5,25 @@ using UnityEngine.UI;
 
 public class ErrorCanvas : MonoBehaviour
 {
+    public static ErrorCanvas Instance; // 싱글턴 인스턴스
+
     [SerializeField] private GameObject errorPanel;
     [SerializeField] private Text errorMessageText;
     private System.Action onErrorConfirmed; // 에러 확인 후 실행할 함수 저장
+
+    void Awake()
+    {
+        // 싱글턴 인스턴스 설정
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject); // 옵션: 씬 전환시 파괴되지 않도록 설정
+        }
+        else
+        {
+            Destroy(gameObject); // 중복 인스턴스가 생성되면 파괴
+        }
+    }
 
     public void ShowErrorMessage(string message, System.Action onConfirm)
     {

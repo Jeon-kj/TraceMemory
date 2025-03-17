@@ -42,7 +42,9 @@ public class FirebaseManager : MonoBehaviour
             }
             catch (System.Exception ex)
             {
-                Debug.LogError("Firebase Database initialization failed: " + ex.Message);
+                ErrorCanvas.Instance.ShowErrorMessage("Firebase Database initialization failed", () => {
+                    Debug.LogError("Firebase Database initialization failed: " + ex.Message);
+                });
             }
 
             storage = FirebaseStorage.DefaultInstance;

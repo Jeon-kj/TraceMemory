@@ -25,7 +25,6 @@ public class ButtonManager : MonoBehaviour
     public AuxiliaryCanvas auxiliaryCanvas;
     public MiniGame1 miniGame1;
     public MiniGame2 miniGame2;
-    public ErrorCanvas errorCanvas;
     public RoomManager roomManager;
     public PlayerProperties playerProperties;
 
@@ -35,7 +34,6 @@ public class ButtonManager : MonoBehaviour
         playerReady = FindObjectOfType<PlayerReady>();
         canvasManager = FindObjectOfType<CanvasManager>();
         uploader = FindObjectOfType<Uploader>();
-        errorCanvas = FindObjectOfType<ErrorCanvas>();
         roomManager = FindObjectOfType<RoomManager>();
         playerProperties = FindObjectOfType<PlayerProperties>();
 
@@ -350,12 +348,6 @@ public class ButtonManager : MonoBehaviour
         GameObject targetPanel = FindParentWithTag(clickedButton, "Panel");
         Text buttonText = clickedButton.GetComponentInChildren<Text>();
 
-        if (targetPanel == null)
-        {
-            Debug.LogError("Target panel not found!");
-            return;
-        }
-
         if (targetPanel == auxiliaryCanvas.GetPanel("miniGameSelectDisplay"))
         {
             GameObject targetPlayer = FindParentWithTag(clickedButton, "Player");
@@ -392,8 +384,6 @@ public class ButtonManager : MonoBehaviour
                     miniGame1.SetActiveDisplay("waitDisplay", true);
                 }
             }
-            // MiniGame2는 필요없음.
-            Debug.Log("OnAuxiliaryCanvas check out");
         }
 
         else if (targetPanel == auxiliaryCanvas.GetPanel("timer"))
@@ -518,6 +508,6 @@ public class ButtonManager : MonoBehaviour
 
     public void OnErrorCanvas()
     {
-        errorCanvas.OnErrorConfirmed();
+        ErrorCanvas.Instance.OnErrorConfirmed();
     }
 }

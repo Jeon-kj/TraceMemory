@@ -24,7 +24,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
     private PlayerReady playerReady;
     private NetworkManager networkManager;
     private PreGameCanvas preGameCanvas;
-    private ErrorCanvas errorCanvas;
 
     public List<int> prePlayerOrder;
 
@@ -42,7 +41,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
         playerReady = FindObjectOfType<PlayerReady>();
         networkManager = FindObjectOfType<NetworkManager>();
         preGameCanvas = FindObjectOfType<PreGameCanvas>();
-        errorCanvas = FindObjectOfType<ErrorCanvas>();
     }
     
     // 방만들기
@@ -147,8 +145,11 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
         if (targetRoom == null)
         {
-            Debug.LogError("Room not found.");
-            // UI 예외처리.
+            ErrorCanvas.Instance.ShowErrorMessage("방을 찾을 수 없습니다.", () =>
+            {
+                Debug.LogError("Can't Find Room");
+                preGameCanvas.SetActiveDisplay("loading", false);
+            });
             return;
         }
 
@@ -160,8 +161,9 @@ public class RoomManager : MonoBehaviourPunCallbacks
         if ((gender == "Male" && maleCount >= maxPlayer/2) || (gender == "Female" && femaleCount >= maxPlayer/2))
         {
             // UI 예외처리.
-            errorCanvas.ShowErrorMessage($"해당 방 {roomCode}에 입장할 수 없습니다. : {gender}칸 정원 초과", () =>
+            ErrorCanvas.Instance.ShowErrorMessage($"해당 방 {roomCode}에 입장할 수 없습니다. : {gender}칸 정원 초과", () =>
             {
+                Debug.LogError("Can't Join Room");
                 preGameCanvas.OnRoomFailed();
             });
             return; 
@@ -252,7 +254,9 @@ public class RoomManager : MonoBehaviourPunCallbacks
         }
         else
         {
-            Debug.LogError("Failed to upload image");
+            ErrorCanvas.Instance.ShowErrorMessage("이미지 업로드 실패.", () => {
+                Debug.LogError("Image File Upload Failed");
+            });
         }
     }
 

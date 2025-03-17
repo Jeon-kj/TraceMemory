@@ -121,7 +121,10 @@ public class GameManager : MonoBehaviour
             }
             else
             {
-                Debug.LogError("LobbyScene is missing from Build Settings!"); // µð¹ö±ë ·Î±×
+                ErrorCanvas.Instance.ShowErrorMessage("LobbyScene is missing from Build Settings!", () =>
+                {
+                    Debug.LogError("LobbyScene is missing from Build Settings!");
+                });                
             }
         }
         else
