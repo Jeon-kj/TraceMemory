@@ -67,4 +67,15 @@ public static class RoomExtensions
             room.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "PlayerReady", playerReady.ToArray() } });
         }            
     }
+
+    public static int GetMaxPlayerNumber(this Room room)
+    {
+        if (room.CustomProperties.TryGetValue("MaxPlayer", out object maxPlayerObj) && maxPlayerObj is int maxPlayer)
+        {
+            return maxPlayer;
+        }
+
+        // 기본값을 반환 (예: 0 또는 다른 기본값 설정 가능)
+        return 0;
+    }
 }

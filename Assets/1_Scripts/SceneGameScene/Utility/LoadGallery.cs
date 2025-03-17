@@ -13,6 +13,12 @@ public class LoadGallery : MonoBehaviour
     {
         NativeGallery.GetImageFromGallery((file) => // 갤러리 열기
         {
+            if (string.IsNullOrEmpty(file)) // 사용자가 취소한 경우
+            {
+                Debug.Log("Image selection canceled.");
+                return;
+            }
+
             Debug.Log("opened");
             FileInfo selected = new FileInfo(file); // 사진 고르기
 

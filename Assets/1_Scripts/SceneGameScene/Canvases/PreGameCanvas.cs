@@ -62,7 +62,7 @@ public class PreGameCanvas : MonoBehaviour
         Text buttonText = clickedButton.GetComponentInChildren<Text>();
 
         if (buttonText.text == "害失") playerProperties.GenderIsMale();
-        else if (buttonText.text == "食失") playerProperties.GenderIsFemale();
+        else if (buttonText.text == "食失") playerProperties.GenderIsFemale();        
     }
 
     public void OnRoomJoined()

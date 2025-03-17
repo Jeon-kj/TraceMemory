@@ -25,7 +25,9 @@ public class ButtonManager : MonoBehaviour
     public AuxiliaryCanvas auxiliaryCanvas;
     public MiniGame1 miniGame1;
     public MiniGame2 miniGame2;
-    
+    public ErrorCanvas errorCanvas;
+    public RoomManager roomManager;
+    public PlayerProperties playerProperties;
 
     private void Awake()
     {
@@ -33,6 +35,10 @@ public class ButtonManager : MonoBehaviour
         playerReady = FindObjectOfType<PlayerReady>();
         canvasManager = FindObjectOfType<CanvasManager>();
         uploader = FindObjectOfType<Uploader>();
+        errorCanvas = FindObjectOfType<ErrorCanvas>();
+        roomManager = FindObjectOfType<RoomManager>();
+        playerProperties = FindObjectOfType<PlayerProperties>();
+
 
         /*
         debugCanvas = FindObjectOfType<DebugCanvas>();
@@ -69,9 +75,11 @@ public class ButtonManager : MonoBehaviour
         else if (targetPanel == preGameCanvas.GetPanel("genderSelect"))
         {
             preGameCanvas.SetGender();
+            networkManager.Connect();
 
             preGameCanvas.SetActiveDisplay("genderSelect", false);
-            preGameCanvas.SetActiveDisplay("roomEntry", true);            
+            preGameCanvas.SetActiveDisplay("roomEntry", true);
+            preGameCanvas.SetActiveDisplay("loading", true);
         }
         else if (targetPanel == preGameCanvas.GetPanel("roomEntry"))
         {
@@ -87,14 +95,14 @@ public class ButtonManager : MonoBehaviour
             else if (txt == "6인") GameManager.Instance.SetPlayerMaxNumber(6);
 
             preGameCanvas.SetActiveDisplay("maxSelect", false);
-            networkManager.Connect("방만들기");
+            roomManager.CreateRoom();
             preGameCanvas.SetActiveDisplay("loading", true);
         }
         else if (targetPanel == preGameCanvas.GetPanel("roomSelect"))
         {
             string roomCode = targetPanel.GetComponentInChildren<InputField>().text;
-            networkManager.Connect("입장하기"+roomCode);
-
+            string gender = playerProperties.GetGender();
+            roomManager.TryJoinRoom(roomCode, gender);
             preGameCanvas.SetActiveDisplay("loading", true);
         }
         else if (targetPanel == preGameCanvas.GetPanel("loading"))
@@ -136,6 +144,7 @@ public class ButtonManager : MonoBehaviour
         }
         else if (targetPanel == preGameCanvas.GetPanel("roomEntry"))
         {
+            if(PhotonNetwork.IsConnected) PhotonNetwork.Disconnect();
             preGameCanvas.SetActiveDisplay("roomEntry", false);
             preGameCanvas.SetActiveDisplay("genderSelect", true);
         }
@@ -157,7 +166,7 @@ public class ButtonManager : MonoBehaviour
         {
             preGameCanvas.SetActiveDisplay("roomDisplay", false);
             preGameCanvas.SetActiveDisplay("roomEntry", true);
-            PhotonNetwork.Disconnect(); // leaveRoom 하지 않는 이유는 Room을 나가면 Lobby로 가게 되는데 NetworkManager의 OnJoinedLobby의 로직과 맞지 않음.
+            PhotonNetwork.LeaveRoom(); // leaveRoom 하지 않는 이유는 Room을 나가면 Lobby로 가게 되는데 NetworkManager의 OnJoinedLobby의 로직과 맞지 않음.
         }
     }
 
@@ -493,7 +502,6 @@ public class ButtonManager : MonoBehaviour
         return null; // 조건에 맞는 부모가 없을 경우
     }
 
-
     public void OnDebugCanvas()
     {
         GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
@@ -506,5 +514,10 @@ public class ButtonManager : MonoBehaviour
         {
             debugCanvas.ToggleDisplay(debugBox, null);
         }
+    }
+
+    public void OnErrorCanvas()
+    {
+        errorCanvas.OnErrorConfirmed();
     }
 }

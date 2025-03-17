@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Unity.VisualScripting;
 using System.Linq;
 using System;
+using UnityEngine.Analytics;
 
 
 public class RoomManager : MonoBehaviourPunCallbacks
@@ -23,6 +24,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     private PlayerReady playerReady;
     private NetworkManager networkManager;
     private PreGameCanvas preGameCanvas;
+    private ErrorCanvas errorCanvas;
 
     public List<int> prePlayerOrder;
 
@@ -40,16 +42,28 @@ public class RoomManager : MonoBehaviourPunCallbacks
         playerReady = FindObjectOfType<PlayerReady>();
         networkManager = FindObjectOfType<NetworkManager>();
         preGameCanvas = FindObjectOfType<PreGameCanvas>();
+        errorCanvas = FindObjectOfType<ErrorCanvas>();
     }
     
     // 방만들기
     public void CreateRoom()
     {
+        string gender = playerProperties.GetGender();
         int maxPlayer = GameManager.Instance.GetPlayerMaxNumber();
-        RoomOptions roomOptions = new RoomOptions();
-        roomOptions.MaxPlayers = maxPlayer; // 방의 최대 플레이어 수 설정
         roomCode = GenerateRoomCode();
-        uploader.UploadPlayerMaxNumber(roomCode, maxPlayer);
+        RoomOptions roomOptions = new RoomOptions
+        {
+            MaxPlayers = maxPlayer,
+            CustomRoomProperties = new ExitGames.Client.Photon.Hashtable
+            {
+                { "RoomCode", roomCode },
+                { "MaleCount", gender == "Male" ? 1 : 0 },
+                { "FemaleCount", gender == "Female" ? 1 : 0 },
+                { "MaxPlayer", maxPlayer }
+            },
+            CustomRoomPropertiesForLobby = new string[] { "RoomCode", "MaleCount", "FemaleCount", "MaxPlayer" }
+        };
+        //uploader.UploadPlayerMaxNumber(roomCode, maxPlayer);
         PhotonNetwork.CreateRoom(roomCode, roomOptions, TypedLobby.Default);
     }
 
@@ -95,9 +109,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
         roomList.Clear();
         roomList.AddRange(updatedRoomList);
         Debug.Log("방 목록 업데이트됨. 총 방 수: " + roomList.Count);
-        // 문제 가능성 1. 로비에 들어올 때 방 목록이 자동으로 갱신되긴 하지만 그게 "로비 들어온 직후"라고 하기는 어렵다.
-        //              그렇기 때문에 새로운 플레이어가 방 목록을 불러오는 데까지 얼마나 걸리는 지가 중요함.
-        //              너무 오래 걸린다면 새로운 방식의 설계가 필요할 것.
     }
 
     // 방만들기 이후 호출됨.
@@ -113,9 +124,50 @@ public class RoomManager : MonoBehaviourPunCallbacks
         preGameCanvas.OnRoomFailed();
     }
 
-    // 방 입장하기
-    public void JoinRoom(string roomCode)
+    public void TryJoinRoom(string roomCode, string gender)
     {
+        if (!PhotonNetwork.InLobby)
+        {
+            Debug.LogWarning("Not in lobby, cannot check room list.");
+            return;
+        }
+
+        RoomInfo targetRoom = null;
+
+        // 현재 로비에서 방 리스트 가져오기
+        foreach (RoomInfo room in roomList)
+        {
+            DebugCanvas.Instance.DebugLog($"room Code: {room.CustomProperties["RoomCode"]}");
+            if (room.CustomProperties.ContainsKey("RoomCode") && (string)room.CustomProperties["RoomCode"] == roomCode)
+            {
+                targetRoom = room;
+                break;
+            }
+        }
+
+        if (targetRoom == null)
+        {
+            Debug.LogError("Room not found.");
+            // UI 예외처리.
+            return;
+        }
+
+        // 방의 현재 남녀 정원 확인
+        int maleCount = targetRoom.CustomProperties.ContainsKey("MaleCount") ? (int)targetRoom.CustomProperties["MaleCount"] : 0;
+        int femaleCount = targetRoom.CustomProperties.ContainsKey("FemaleCount") ? (int)targetRoom.CustomProperties["FemaleCount"] : 0;
+        int maxPlayer = (int)targetRoom.CustomProperties["MaxPlayer"];
+
+        if ((gender == "Male" && maleCount >= maxPlayer/2) || (gender == "Female" && femaleCount >= maxPlayer/2))
+        {
+            // UI 예외처리.
+            errorCanvas.ShowErrorMessage($"해당 방 {roomCode}에 입장할 수 없습니다. : {gender}칸 정원 초과", () =>
+            {
+                preGameCanvas.OnRoomFailed();
+            });
+            return; 
+        }
+
+        // 입장이 가능하면 방에 들어가기
         PhotonNetwork.JoinRoom(roomCode);
         this.roomCode = roomCode;
     }
@@ -123,10 +175,15 @@ public class RoomManager : MonoBehaviourPunCallbacks
     // 방 입장하기 이후 호출됨.
     public override async void OnJoinedRoom()
     {
+        // 방 코드 설정.
         GameManager.Instance.SetRoomCode(roomCode);
+
         // 방 최대인원 공유.
-        int maxPlayer = await loader.LoadPlayerMaxNumber();
+        //int maxPlayer = await loader.LoadPlayerMaxNumber();
+        int maxPlayer = PhotonNetwork.CurrentRoom.GetMaxPlayerNumber();
         GameManager.Instance.SetPlayerMaxNumber(maxPlayer);
+
+        // 플레이어 준비 상태 업데이트
         playerReady.OnJoinedRoom();
         prePlayerOrder = PhotonNetwork.CurrentRoom.GetPlayerOrderList();
 
@@ -139,10 +196,43 @@ public class RoomManager : MonoBehaviourPunCallbacks
         string playerGender = playerProperties.GetGender(); // 예: 플레이어 성별 가져오기
         string playerImageFileName = playerProperties.GetImageFileName(); // 예: 플레이어 이미지 URL 가져오기
 
+        // 방 입장 후 성별 인원 정보 업데이트
+        UpdateRoomGenderCount(playerGender);
+
+        // 플레이어 정보 저장
         SavePlayerInfo(playerName, playerGender, playerImageFileName);
 
+        // UI 업데이트
         roomDisplay.RoomCodeUpdate(roomCode);
         preGameCanvas.OnRoomJoined();
+    }
+
+    public void UpdateRoomGenderCount(string gender)
+    {
+        if (!PhotonNetwork.InRoom) return;
+
+        // 현재 Room Properties 가져오기
+        ExitGames.Client.Photon.Hashtable properties = PhotonNetwork.CurrentRoom.CustomProperties;
+
+        int maleCount = properties.ContainsKey("MaleCount") ? (int)properties["MaleCount"] : 0;
+        int femaleCount = properties.ContainsKey("FemaleCount") ? (int)properties["FemaleCount"] : 0;
+
+        ExitGames.Client.Photon.Hashtable newProperties = new ExitGames.Client.Photon.Hashtable();
+        ExitGames.Client.Photon.Hashtable expectedProperties = new ExitGames.Client.Photon.Hashtable();
+
+        if (gender == "Male")
+        {
+            newProperties["MaleCount"] = maleCount + 1;
+            expectedProperties["MaleCount"] = maleCount; // 기존 값이 예상한 값과 같아야 업데이트 가능
+        }
+        else
+        {
+            newProperties["FemaleCount"] = femaleCount + 1;
+            expectedProperties["FemaleCount"] = femaleCount; // 기존 값이 예상한 값과 같아야 업데이트 가능
+        }
+
+        // expectedProperties와 현재 CustomProperties가 일치해야만 newProperties가 적용됨.
+        PhotonNetwork.CurrentRoom.SetCustomProperties(newProperties, expectedProperties);
     }
 
     async Task SendImageToStorage()
