@@ -8,11 +8,11 @@ using UnityEngine;
 
 public class PlayerReady : MonoBehaviour
 {
-    public List<int> prePlayerReady;
+    Dictionary<int, bool> prePlayerReady;
 
     public void OnJoinedRoom()
     {
-        prePlayerReady = PhotonNetwork.CurrentRoom.GetPlayerReadyList();
+        prePlayerReady = GetPlayerReadyDictionary();
     }
 
 
@@ -20,62 +20,88 @@ public class PlayerReady : MonoBehaviour
     {
         if(text == "준비")
         {
-            SetPlayerReady();
+            SetPlayerReady(true);
         }
         else if(text == "취소")
         {
-            CancelPlayerReady(PhotonNetwork.LocalPlayer.ActorNumber);
+            SetPlayerReady(false);
         }
     }
 
-    void SetPlayerReady()
+    public void RegisterPlayerReadyStatus(int actorNumber)
     {
-        int actorNumber = PhotonNetwork.LocalPlayer.ActorNumber;
-        PhotonNetwork.CurrentRoom.AddPlayerReady(actorNumber);
+        PhotonNetwork.CurrentRoom.RegisterPlayerReadyStatus(actorNumber);
     }
 
-    public void CancelPlayerReady(int actorNumber)
+    public void DelPlayerReady(int actorNumber)
     {
         PhotonNetwork.CurrentRoom.DelPlayerReady(actorNumber);
     }
 
+    void SetPlayerReady(bool sign)
+    {
+        int actorNumber = PhotonNetwork.LocalPlayer.ActorNumber;
+        PhotonNetwork.CurrentRoom.SetPlayerReadyStatus(actorNumber, sign);
+    }
+
     public void CleanUpPlayerReady()
     {
-        ExitGames.Client.Photon.Hashtable customProps = PhotonNetwork.CurrentRoom.CustomProperties;
+        if (!PhotonNetwork.IsMasterClient || !PhotonNetwork.InRoom)
+            return;
 
-        // 순서를 저장할 배열이나 리스트를 가져옵니다.
-        List<int> playerReady = PhotonNetwork.CurrentRoom.GetPlayerReadyList();
-
-
-        List<int> playersToRemove = new List<int>();
-
-        foreach (int actorNumber in playerReady)
-        {
-            Player targetPlayer = PhotonNetwork.PlayerList.FirstOrDefault(player => player.ActorNumber == actorNumber);
-
-            if (targetPlayer == null)
-            {
-                playersToRemove.Add(actorNumber);
-            }
-        }
-
-        foreach (int actorNumber in playersToRemove)
-        {
-            playerReady.Remove(actorNumber);
-        }
+        // 현재 방에 있는 플레이어 ActorNumber 목록 (string)
+        var currentPlayers = new HashSet<string>(PhotonNetwork.PlayerList.Select(p => p.ActorNumber.ToString()));
 
 
-        // 룸 커스텀 프로퍼티에 다시 저장
-        customProps["PlayerReady"] = playerReady.ToArray(); // 배열로 저장
-        PhotonNetwork.CurrentRoom.SetCustomProperties(customProps);
+        // 기존 준비된 플레이어 딕셔너리 가져오기
+        var readyDict = GetPlayerReadyDictionary();
+
+        // 남아 있는 플레이어만 걸러냄
+        var cleanedDict = readyDict
+            .Where(kvp => currentPlayers.Contains(kvp.Key.ToString()))
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+        // 다시 저장
+        PhotonNetwork.CurrentRoom.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "PlayerReady", cleanedDict } });
     }
 
     public bool AreAllPlayersReady()
     {
-        //return prePlayerReady.Count == PhotonNetwork.CurrentRoom.MaxPlayers;
-        return prePlayerReady.Count == GameManager.Instance.GetPlayerMaxNumber();
+        int cnt = 0;
+        var readyDict = GetPlayerReadyDictionary();
+
+        // 현재 방에 있는 모든 플레이어에 대해 준비 여부 확인
+        foreach (var player in PhotonNetwork.PlayerList)
+        {
+            int actorNumber = player.ActorNumber;
+
+            if (readyDict.TryGetValue(actorNumber, out bool isReady) && isReady)
+            {
+                Debug.Log($"플레이어 {actorNumber} 준비 됨");
+                cnt++;
+            }
+        }
+
+        if (cnt == GameManager.Instance.GetPlayerMaxNumber())
+        {
+            Debug.Log("모든 플레이어 준비 완료");
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public Dictionary<int, bool> GetPrePlayerReady { get { return prePlayerReady; } }
+
+    public void SetPrePlayerReady(Dictionary<int, bool> dict)
+    {
+        prePlayerReady = dict;
+    }
+
+    public Dictionary<int, bool> GetPlayerReadyDictionary()
+    {
+        return PhotonNetwork.CurrentRoom.GetPlayerReadyDictionary();
     }
 }
-
-// 할 거 :
-// 준비 다 되면 시작하기.

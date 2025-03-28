@@ -46,7 +46,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
     // 방만들기
     public void CreateRoom()
     {
-        string gender = playerProperties.GetGender();
         int maxPlayer = GameManager.Instance.GetPlayerMaxNumber();
         roomCode = GenerateRoomCode();
         RoomOptions roomOptions = new RoomOptions
@@ -55,8 +54,8 @@ public class RoomManager : MonoBehaviourPunCallbacks
             CustomRoomProperties = new ExitGames.Client.Photon.Hashtable
             {
                 { "RoomCode", roomCode },
-                { "MaleCount", gender == "Male" ? 1 : 0 },
-                { "FemaleCount", gender == "Female" ? 1 : 0 },
+                { "MaleCount", 0 },
+                { "FemaleCount", 0 },
                 { "MaxPlayer", maxPlayer }
             },
             CustomRoomPropertiesForLobby = new string[] { "RoomCode", "MaleCount", "FemaleCount", "MaxPlayer" }
@@ -158,6 +157,10 @@ public class RoomManager : MonoBehaviourPunCallbacks
         int femaleCount = targetRoom.CustomProperties.ContainsKey("FemaleCount") ? (int)targetRoom.CustomProperties["FemaleCount"] : 0;
         int maxPlayer = (int)targetRoom.CustomProperties["MaxPlayer"];
 
+        DebugCanvas.Instance.DebugLog($"maleCount :: {maleCount}");
+        DebugCanvas.Instance.DebugLog($"femaleCount :: {femaleCount}");
+        DebugCanvas.Instance.DebugLog($"maxPlayer :: {maxPlayer}");
+
         if ((gender == "Male" && maleCount >= maxPlayer/2) || (gender == "Female" && femaleCount >= maxPlayer/2))
         {
             // UI 예외처리.
@@ -197,6 +200,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         string playerName = playerProperties.GetName(); ; // 예: 플레이어 이름 가져오기
         string playerGender = playerProperties.GetGender(); // 예: 플레이어 성별 가져오기
         string playerImageFileName = playerProperties.GetImageFileName(); // 예: 플레이어 이미지 URL 가져오기
+        int playerActorNumber = PhotonNetwork.LocalPlayer.ActorNumber;
 
         // 방 입장 후 성별 인원 정보 업데이트
         UpdateRoomGenderCount(playerGender);
@@ -205,11 +209,14 @@ public class RoomManager : MonoBehaviourPunCallbacks
         SavePlayerInfo(playerName, playerGender, playerImageFileName);
 
         // UI 업데이트
+        roomDisplay.UpdatePlayerOrderDisplay();
+        //roomDisplay.UpdatePlayerReadyStatus();
+        playerReady.RegisterPlayerReadyStatus(playerActorNumber);
         roomDisplay.RoomCodeUpdate(roomCode);
         preGameCanvas.OnRoomJoined();
     }
 
-    public void UpdateRoomGenderCount(string gender)
+    public void UpdateRoomGenderCount(string gender, bool decrease = false)
     {
         if (!PhotonNetwork.InRoom) return;
 
@@ -224,12 +231,12 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
         if (gender == "Male")
         {
-            newProperties["MaleCount"] = maleCount + 1;
+            newProperties["MaleCount"] = decrease ? Math.Max(0, maleCount - 1) : maleCount + 1;
             expectedProperties["MaleCount"] = maleCount; // 기존 값이 예상한 값과 같아야 업데이트 가능
         }
         else
         {
-            newProperties["FemaleCount"] = femaleCount + 1;
+            newProperties["FemaleCount"] = decrease ? Math.Max(0, femaleCount - 1) : femaleCount + 1;
             expectedProperties["FemaleCount"] = femaleCount; // 기존 값이 예상한 값과 같아야 업데이트 가능
         }
 
@@ -294,13 +301,24 @@ public class RoomManager : MonoBehaviourPunCallbacks
         PhotonNetwork.CurrentRoom.AddPlayerOrder(actorNumber);
     }
 
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        DebugCanvas.Instance.DebugLog($"OnPlayerEnteredRoom come in!");
+        roomDisplay.UpdatePlayerOrderDisplay();
+        //roomDisplay.UpdatePlayerReadyStatus();
+    }
+
     // 플레이어가 방 퇴장할 때마다 호출됨.
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
+        string leftPlayerGender = otherPlayer.GetPlayerGender();
+        DebugCanvas.Instance.DebugLog($"leftPlayerGender :: {leftPlayerGender}");
+
         if (PhotonNetwork.IsMasterClient) // 모두가 실행하면 동일한 룸커스텀프로퍼티 업데이트가 여러번 발생해서 비효율적.
         {
+            UpdateRoomGenderCount(leftPlayerGender, decrease: true);    // 밖에서 보는 방 인원 수 감소시키기
             OnPlayerLeftUpdateRoomProperties(otherPlayer.ActorNumber);
-            playerReady.CancelPlayerReady(otherPlayer.ActorNumber); // 
+            playerReady.DelPlayerReady(otherPlayer.ActorNumber); // 
         }
         roomDisplay.OnLeftRoom(otherPlayer);
     }
@@ -322,20 +340,29 @@ public class RoomManager : MonoBehaviourPunCallbacks
                 debugText.text += $"{PhotonNetwork.LocalPlayer.ActorNumber} : UpdatePlayerOrderDisplay\n";
                 prePlayerOrder = new List<int>(currentPlayerOrder);  // 최신 상태로 업데이트
                 roomDisplay.UpdatePlayerOrderDisplay();
+                roomDisplay.UpdatePlayerReadyStatus();
             }
         }
 
         if (propertiesThatChanged.ContainsKey("PlayerReady"))
         {
-            List<int> currentPlayerReady = ((int[])propertiesThatChanged["PlayerReady"]).ToList();
+            DebugCanvas.Instance.DebugLog("OnRoomPropertiesUpdate :: PlayerReady");
+            ExitGames.Client.Photon.Hashtable updated = (ExitGames.Client.Photon.Hashtable)propertiesThatChanged["PlayerReady"];
+            Dictionary<int, bool> updatedDict = new();
 
-            // 이전 상태와 비교
-            if (!AreListsEqual(playerReady.prePlayerReady, currentPlayerReady))
+            foreach (DictionaryEntry entry in updated)
             {
-                debugText.text += $"{PhotonNetwork.LocalPlayer.ActorNumber} : UpdatePlayerReadyStatus\n";
-                playerReady.prePlayerReady = new List<int>(currentPlayerReady);  // 최신 상태로 업데이트
+                if (int.TryParse(entry.Key.ToString(), out int actorNum))
+                {
+                    updatedDict[actorNum] = (bool)entry.Value;
+                }
+            }
+
+            if (!AreDictionariesEqual(playerReady.GetPrePlayerReady, updatedDict))
+            {
+                playerReady.SetPrePlayerReady(new Dictionary<int, bool>(updatedDict));
                 roomDisplay.UpdatePlayerReadyStatus();
-                GameManager.Instance.CheckIfAllPlayersReady(); // @@플레이어들의 준비상태 확인하고, 게임 시작@@
+                GameManager.Instance.CheckIfAllPlayersReady();
             }
         }
     }
@@ -348,6 +375,18 @@ public class RoomManager : MonoBehaviourPunCallbacks
         for (int i = 0; i < list1.Count; i++)
         {
             if (list1[i] != list2[i]) return false;
+        }
+        return true;
+    }
+
+    bool AreDictionariesEqual(Dictionary<int, bool> a, Dictionary<int, bool> b)
+    {
+        if (a.Count != b.Count) return false;
+
+        foreach (var kvp in a)
+        {
+            if (!b.TryGetValue(kvp.Key, out bool val) || val != kvp.Value)
+                return false;
         }
         return true;
     }

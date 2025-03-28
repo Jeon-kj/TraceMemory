@@ -19,7 +19,8 @@ public class RoomDisplay : MonoBehaviour
     public GameObject[] males;
     public GameObject[] females;
 
-    public Loader Loader;
+    Loader Loader;
+    PlayerReady playerReady;
 
     public Text RoomCode;
     public Text NumberOfPlayers;
@@ -27,6 +28,7 @@ public class RoomDisplay : MonoBehaviour
     private void Awake()
     {
         Loader = FindObjectOfType<Loader>();
+        playerReady = FindObjectOfType<PlayerReady>();
     }
 
     public void UpdatePlayerOrderDisplay()
@@ -35,12 +37,9 @@ public class RoomDisplay : MonoBehaviour
         maleInRoom = new List<Player>();
         femaleInRoom = new List<Player>();
 
-        //debugText.text += "maleInRoom.Count : " + maleInRoom.Count() + "\n";
-
         foreach (int actorNumber in playerOrder)
         {
             Player player = PhotonNetwork.PlayerList.FirstOrDefault(player => player.ActorNumber == actorNumber);
-            //debugText.text += player.GetPlayerName() + "\n";
             if (player.GetPlayerGender() == "Male")
             {
                 if (!maleInRoom.Contains(player)) maleInRoom.Add(player);
@@ -95,8 +94,8 @@ public class RoomDisplay : MonoBehaviour
 
     public void UpdatePlayerReadyStatus()
     {
-        List<int> playerReady = PhotonNetwork.CurrentRoom.GetPlayerReadyList();
-
+        DebugCanvas.Instance.DebugLog("UpdatePlayerReadyStatus");
+        Dictionary<int, bool> playerReadyDict = playerReady.GetPlayerReadyDictionary();
 
         foreach (Player player in PhotonNetwork.PlayerList)
         {
@@ -104,12 +103,19 @@ public class RoomDisplay : MonoBehaviour
             GameObject[] targetArray = gender == "Male" ? males : females;
             List<Player> targetList = gender == "Male" ? maleInRoom : femaleInRoom;
 
+            foreach(Player target in targetList) 
+            {
+                DebugCanvas.Instance.DebugLog($"target :: {target.GetPlayerName()}");
+            }
             int index = targetList.IndexOf(player);
 
             if (index >= 0 && index < targetArray.Length)
             {
+                DebugCanvas.Instance.DebugLog("UpdatePlayerReadyStatus2");
+                bool isReady = playerReadyDict.TryGetValue(player.ActorNumber, out bool ready) && ready;
+
                 // 플레이어가 targetList에 있을 경우 UI 업데이트
-                Color textColor = playerReady.Contains(player.ActorNumber) ? Color.green : Color.black;
+                Color textColor = isReady ? Color.green : Color.black;
                 targetArray[index].transform.Find("PlayerName").GetComponent<Text>().color = textColor;
             }
             else
