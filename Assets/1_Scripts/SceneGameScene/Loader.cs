@@ -651,20 +651,16 @@ public class Loader : MonoBehaviourPunCallbacks
                         Debug.Log($"ActorNumber: {actorNumber}");
                     }
                 }
-                else
-                {
-                    // 아무도 선택하지 않은 선택지가 있음.
-                    leastCount = 0;
-                    leastCountChoiceIdx = i;
-                    players.Clear();
-                }
+            }
+            else
+            {
+                // 아무도 선택하지 않은 선택지가 있음.
+                leastCount = 0;
+                leastCountChoiceIdx = i;
+                players.Clear();
             }
         }
 
-        if (leastCount == GameManager.Instance.GetPlayerMaxNumber() / 2)
-        {
-            // 동점 처리.
-        }
         Debug.Log($"leastCountChoiceIdx : {leastCountChoiceIdx}, players : {players}");
         return (leastCountChoiceIdx, players);
     }

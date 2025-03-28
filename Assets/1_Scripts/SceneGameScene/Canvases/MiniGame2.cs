@@ -39,11 +39,10 @@ public class MiniGame2 : MonoBehaviourPunCallbacks
         uploader = FindObjectOfType<Uploader>();
         loader = FindObjectOfType<Loader>();
     }
-
-    private void Start()
+    
+    public void FirstTurnOnCanvas()
     {
         InitializeGameState();
-
     }
 
     private void InitializeGameState()
@@ -131,7 +130,7 @@ public class MiniGame2 : MonoBehaviourPunCallbacks
         var (leastCountChoiceIdx,  players) = await loader.FindChoiceAndPlayer();
 
         Transform topScorer = resultDisplay.transform.Find("Result");
-
+        DebugCanvas.Instance.DebugLog($"players.Count :: {players.Count}");
         if (players.Count == GameManager.Instance.GetPlayerMaxNumber() / 2) // 동점 처리.
         {
             topScorer.GetComponent<Text>().text += "두 선택지를 선택한 사람의 수가 동일합니다.";
@@ -223,5 +222,14 @@ public class MiniGame2 : MonoBehaviourPunCallbacks
         }
 
         return gameObject;
+    }
+
+    public void SetInit()
+    {
+        SetActiveDisplay("waitDisplay", true);
+        baseDisplay.transform.Find("Question").GetComponent<Text>().text = "";
+        baseDisplay.transform.Find("ButtonLeft").gameObject.SetActive(true);
+        baseDisplay.transform.Find("ButtonRight").gameObject.SetActive(true);
+        resultDisplay.transform.Find("Result").GetComponent<Text>().text = "";
     }
 }

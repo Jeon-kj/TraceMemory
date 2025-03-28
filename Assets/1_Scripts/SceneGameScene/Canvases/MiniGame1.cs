@@ -38,10 +38,9 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
         loader = FindObjectOfType<Loader>();
     }
 
-    private void Start()
+    public void FirstTurnOnCanvas()
     {
         InitializeGameState();
-
     }
 
     /* 왜 얘 있으면 OnRoomPropertiesUpdate 호출 안되지?
@@ -234,5 +233,11 @@ public class MiniGame1 : MonoBehaviourPunCallbacks
         }
 
         return gameObject;
+    }
+
+    public void SetInit()
+    {
+        SetActiveDisplay("waitDisplay", true);
+        SetSign("");
     }
 }

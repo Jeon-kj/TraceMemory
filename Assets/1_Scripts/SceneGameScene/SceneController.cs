@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Photon.Pun;
+using System;
 
 
 public class SceneController : MonoBehaviour
@@ -21,10 +22,20 @@ public class SceneController : MonoBehaviour
     {
         preLifeToTransfer = data;
         genderToTransfer = PhotonNetwork.LocalPlayer.GetPlayerGender();
-        SceneManager.LoadScene("Identity", LoadSceneMode.Additive);
+        try
+        {
+            DebugCanvas.Instance.DebugLog("LoadScene");
+            SceneManager.LoadScene("Identity", LoadSceneMode.Additive);
+        }
+        catch(Exception e)
+        {
+            Debug.LogException(e);
+        }
         canvasManager.PreGameCanvas.GetComponent<PreGameCanvas>().SetActiveDisplay("readyToStart", false);
         canvasManager.TurnOffAndOn(canvasManager.PreGameCanvas, canvasManager.QuestionCanvas);
+        canvasManager.QuestionCanvas.GetComponent<QuestionCanvas>().FirstTurnOnCanvas();
         canvasManager.TurnOffAndOn(null, canvasManager.AuxiliaryCanvas);
+        canvasManager.AuxiliaryCanvas.GetComponent<AuxiliaryCanvas>().FirstTurnOnCanvas();
     }
 }
 

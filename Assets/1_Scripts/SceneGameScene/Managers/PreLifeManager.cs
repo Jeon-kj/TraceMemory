@@ -106,4 +106,11 @@ public class PreLifeManager : MonoBehaviourPunCallbacks
 
         sceneController.TransferDataAndLoadScene(preLifeName);
     }
+
+    public void SetInit()
+    {
+        preLifesAssigned = false;
+        males = new List<string> { "¸ù·æ", "°ß¿ì", "¿Â´Þ" };
+        females = new List<string> { "ÃáÇâ", "Á÷³à", "Æò°­" };
+    }
 }

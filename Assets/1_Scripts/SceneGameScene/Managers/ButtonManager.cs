@@ -36,7 +36,7 @@ public class ButtonManager : MonoBehaviour
         uploader = FindObjectOfType<Uploader>();
         roomManager = FindObjectOfType<RoomManager>();
         playerProperties = FindObjectOfType<PlayerProperties>();
-
+        alwaysOnCanvas = FindObjectOfType<AlwaysOnCanvas>(true);
 
         /*
         debugCanvas = FindObjectOfType<DebugCanvas>();
@@ -199,7 +199,9 @@ public class ButtonManager : MonoBehaviour
             questionCanvas.SubmitAnswer();
             
             canvasManager.TurnOffAndOn(canvasManager.QuestionCanvas, canvasManager.AlwaysOnCanvas); // temp
+            alwaysOnCanvas.FirstTurnOnCanvas();
             canvasManager.TurnOffAndOn(null, canvasManager.SelectPlayerCanvas); // temp
+            selectPlayerCanvas.FirstTurnOnCanvas();
         }
     }
 
@@ -275,11 +277,13 @@ public class ButtonManager : MonoBehaviour
             if (!GameManager.Instance.GetSignMG1())
             {
                 canvasManager.TurnOffAndOn(canvasManager.SelectPlayerCanvas, canvasManager.MiniGame1);
+                miniGame1.FirstTurnOnCanvas();
                 uploader.UploadReadyCount("MiniGame1");
             }                
             else if (!GameManager.Instance.GetSignMG2())
             {
                 canvasManager.TurnOffAndOn(canvasManager.SelectPlayerCanvas, canvasManager.MiniGame2);
+                miniGame2.FirstTurnOnCanvas();
                 uploader.UploadReadyCount("MiniGame2");
             }
             else
@@ -414,6 +418,7 @@ public class ButtonManager : MonoBehaviour
         {
             if(buttonText.text == "확인")
             {
+                auxiliaryCanvas.SetActiveDisplay("winner", false);
                 GameManager.Instance.EndGame();
                 // 이제, 준비된 거 해제하고 다시 시작 전 화면으로 초기화 해야함.
             }

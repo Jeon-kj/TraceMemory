@@ -31,16 +31,16 @@ public class AlwaysOnCanvas : MonoBehaviour
         loader = FindObjectOfType<Loader>();
     }
 
-    private void Start()
+    public void FirstTurnOnCanvas()
     {
-        databaseReference = FirebaseManager.Instance.database.RootReference;
-
         string roomCode = GameManager.Instance.GetRoomCode();
         int targetActorNumber = PhotonNetwork.LocalPlayer.ActorNumber;
 
+        databaseReference = FirebaseManager.Instance.database.RootReference;
+
         // 오른쪽 상단에 위치한 호감카드 누르면 나오는 플레이어 이미지 업데이트. (플레이어 대기방을 기준으로)
-        UpdatePlayerDisplay(); 
-        
+        UpdatePlayerDisplay();
+
         // 플레이어가 받은 메시지들을 인터페이스에 추가하고, 앞으로 들어올 메시지 이벤트에 대해서도 같은 작업을 함.
         MonitorScoreOrMessage(targetActorNumber, "SecretMessage");
 
@@ -48,10 +48,9 @@ public class AlwaysOnCanvas : MonoBehaviour
         MonitorAllPlayersScoreChanges("LoveCardScore");
     }
 
-
     public void MonitorScoreOrMessage(int targetActorNumber, string Type)
     {
-        string roomCode = GameManager.Instance.GetRoomCode();
+        string roomCode = GameManager.Instance.GetRoomCode();        
 
         // 점수 경로 설정
         DatabaseReference reference = databaseReference
@@ -244,6 +243,19 @@ public class AlwaysOnCanvas : MonoBehaviour
         if (otherDisplay != null && otherDisplay.activeSelf)
         {
             otherDisplay.SetActive(false);
+        }
+    }
+
+    public void SetInit()
+    {
+        ClearScrollViewContent();
+    }
+
+    public void ClearScrollViewContent()
+    {
+        for (int i = contentTransform.childCount - 1; i >= 0; i--)
+        {
+            DestroyImmediate(contentTransform.GetChild(i).gameObject);
         }
     }
 }

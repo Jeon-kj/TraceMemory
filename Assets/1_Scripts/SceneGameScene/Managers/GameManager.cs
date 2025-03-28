@@ -21,6 +21,11 @@ public class GameManager : MonoBehaviour
     PlayerReady playerReady;
     PreGameCanvas preGameCanvas;
     CanvasManager canvasManager;
+    QuestionCanvas questionCanvas;
+    AlwaysOnCanvas alwaysOnCanvas;
+    MiniGame1 miniGame1;
+    MiniGame2 miniGame2;
+    AuxiliaryCanvas auxiliaryCanvas;
 
     private void Awake()
     {
@@ -40,6 +45,11 @@ public class GameManager : MonoBehaviour
         playerReady = FindObjectOfType<PlayerReady>();
         preGameCanvas = FindObjectOfType<PreGameCanvas>();
         canvasManager = FindObjectOfType<CanvasManager>();
+        questionCanvas = FindObjectOfType<QuestionCanvas>(true);
+        alwaysOnCanvas = FindObjectOfType<AlwaysOnCanvas>(true);
+        miniGame1 = FindObjectOfType<MiniGame1>(true);
+        miniGame2 = FindObjectOfType<MiniGame2>(true);
+        auxiliaryCanvas = FindObjectOfType<AuxiliaryCanvas>(true);
     }
 
     public void CheckIfAllPlayersReady()
@@ -99,8 +109,19 @@ public class GameManager : MonoBehaviour
 
         canvasManager.TurnOffAndOn(canvasManager.AuxiliaryCanvas, canvasManager.PreGameCanvas);
         canvasManager.TurnOffAndOn(canvasManager.AlwaysOnCanvas, null);
+
+        SetInit();
+
         preGameCanvas.SetInit();
         preGameCanvas.SetActiveDisplay("nameInput", true);
+
+        questionCanvas.SetInit();
+        preLifeManager.SetInit();
+        alwaysOnCanvas.SetInit();
+
+        miniGame1.SetInit();
+        miniGame2.SetInit();
+        auxiliaryCanvas.SetInit();
     }
 
     private IEnumerator WaitForLeaveAndLoadScene()
@@ -132,5 +153,11 @@ public class GameManager : MonoBehaviour
             Debug.LogWarning("Photon is not connected. Disconnecting...");
             PhotonNetwork.Disconnect();
         }
+    }
+
+    public void SetInit()
+    {
+        SetSignMG1(false);
+        SetSignMG2(false);
     }
 }

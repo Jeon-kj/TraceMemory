@@ -5520,7 +5520,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 
+  m_Text: "\uBCF4\uC0C1\uC744 \uC5BB\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4."
 --- !u!222 &300588775
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -22356,7 +22356,6 @@ MonoBehaviour:
   auxiliaryCanvas: {fileID: 1734419065}
   miniGame1: {fileID: 456332736}
   miniGame2: {fileID: 123349930}
-  errorCanvas: {fileID: 0}
   roomManager: {fileID: 0}
   playerProperties: {fileID: 0}
 --- !u!4 &1270756011

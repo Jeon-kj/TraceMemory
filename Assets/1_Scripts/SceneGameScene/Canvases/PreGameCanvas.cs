@@ -29,12 +29,6 @@ public class PreGameCanvas : MonoBehaviour
         loadGallery = GetComponent<LoadGallery>();
     }
 
-    public void SetInit()
-    {
-        nameInput.transform.Find("InputField").GetComponent<InputField>().text = "";
-        roomSelect.transform.Find("InputField").GetComponent<InputField>().text = "";
-    }
-
     public void ReadyButtonInit()
     {
         roomDisplay.transform.Find("ReadyButton").GetComponentInChildren<Text>().text = "¡ÿ∫Ò";
@@ -76,7 +70,7 @@ public class PreGameCanvas : MonoBehaviour
     public void OnRoomFailed()
     {
         SetActiveDisplay("loading", false);
-        PhotonNetwork.Disconnect();
+        //PhotonNetwork.Disconnect();
     }
 
     public void ReadyToStartGame()
@@ -158,5 +152,11 @@ public class PreGameCanvas : MonoBehaviour
         }
 
         return gameObject;
+    }
+
+    public void SetInit()
+    {
+        nameInput.transform.Find("InputField").GetComponent<InputField>().text = "";
+        roomSelect.transform.Find("InputField").GetComponent<InputField>().text = "";
     }
 }

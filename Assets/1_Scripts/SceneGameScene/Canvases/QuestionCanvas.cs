@@ -23,15 +23,10 @@ public class QuestionCanvas : MonoBehaviour
         uploader = FindObjectOfType<Uploader>();
     }
 
-    private void Start()
+    public void FirstTurnOnCanvas()
     {
         answers = new int[askQuestions.Length];
-        Init();
-    }
-
-    void Init()
-    {
-        askQuestions[0].gameObject.SetActive(true);
+        SetInit();
     }
 
     public void SubmitAnswer()
@@ -129,4 +124,31 @@ public class QuestionCanvas : MonoBehaviour
 
         return gameObject;
     }
+
+    public void SetInit()
+    {
+        // 각 패널 다 선택 취소하고, 전부 켜두기 1빼고 전부 끄기
+        ClearAllSelections();
+
+        SetActiveDisplay("askQuestion1", true);
+        SetActiveDisplay("askQuestion2", false);
+        SetActiveDisplay("askQuestion3", false);
+        SetActiveDisplay("askQuestion4", false);
+    }
+
+    public void ClearAllSelections()
+    {
+        for (int i = 0; i < askQuestions.Length; i++)
+        {
+            ToggleGroup toggleGroup = askQuestions[i].GetComponent<ToggleGroup>();
+
+            Toggle[] toggles = toggleGroup.GetComponentsInChildren<Toggle>();
+
+            foreach (Toggle toggle in toggles)
+            {
+                toggle.isOn = false;
+            }
+        }
+    }
+
 }

@@ -35,7 +35,7 @@ public class AuxiliaryCanvas : MonoBehaviourPunCallbacks
         canvasManager = FindObjectOfType<CanvasManager>();
     }
 
-    private void Start()
+    public void FirstTurnOnCanvas()
     {
         UpdatePlayerDisplay();
     }
@@ -360,5 +360,11 @@ public class AuxiliaryCanvas : MonoBehaviourPunCallbacks
         }
 
         return gameObject;
+    }
+
+    public void SetInit()
+    {
+        GetPanel("timer").transform.Find("ButtonSkip").gameObject.SetActive(true);
+        miniGameSelectDisplay.transform.Find("Concept").GetComponent<Text>().text = "";
     }
 }

@@ -23,7 +23,7 @@ public class SelectPlayerCanvas : MonoBehaviour
         uploader = FindObjectOfType<Uploader>();
     }
 
-    private void Start()
+    public void FirstTurnOnCanvas()
     {
         if (PhotonNetwork.IsConnected)
         {
